@@ -11,20 +11,20 @@
     ],
     "exports": {
         ".": {
+            "types": "./dist/index.d.ts",
             "import": "./dist/foldui-editor.es.js",
-            "require": "./dist/foldui-editor.umd.js",
-            "types": "./dist/index.d.ts"
+            "require": "./dist/foldui-editor.umd.js"
         }
     },
     "scripts": {
         "dev": "vite",
-        "build": "tsc -b && vite build",
+        "build": "vite build",
         "lint": "eslint .",
         "preview": "vite preview"
     },
-    "dependencies": {
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0"
+    "peerDependencies": {
+        "react": "^18 || ^19",
+        "react-dom": "^18 || ^19"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.1",
