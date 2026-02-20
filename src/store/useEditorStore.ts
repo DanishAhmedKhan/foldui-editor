@@ -26,14 +26,19 @@ type EditorState = {
     patchPath: (id: string, path: string | (string | number)[], value: unknown) => void
 
     getRenderSchema: () => unknown
+
+    addElement: () => void
 }
 
-export const useEditorStore = create<EditorState>((set) => {
+export const useEditorStore = create<EditorState>((set, get) => {
     const builder = new SchemaBuilder<NodeSpecType>(NodeSpec)
+    const version = 0
 
     return {
+        version,
+
         builder,
-        version: 0,
+
         selectedNodeId: null,
 
         selectNode: (id) => set({ selectedNodeId: id }),
@@ -82,6 +87,25 @@ export const useEditorStore = create<EditorState>((set) => {
 
         getRenderSchema: () => {
             return builder.toRenderSchema()
+        },
+
+        addElement: (element) => {
+            const { renderSchema, selectedNodeId } = get()
+
+            if (!renderSchema) return
+
+            const fragment = element.create({
+                selectedNodeId,
+                rootSchema: renderSchema,
+            })
+
+            // Simple root append for now
+            set({
+                renderSchema: {
+                    ...renderSchema,
+                    children: [...(renderSchema.children || []), fragment],
+                },
+            })
         },
     }
 })

@@ -1,8 +1,8 @@
 import React from 'react'
 import { useEditorStore } from '../../store/useEditorStore'
 
-export const ComponentLibrary: React.FC = () => {
-    const addBlock = useEditorStore((s) => s.addBlock)
+export const ElementLibrary: React.FC = () => {
+    const addElement = useEditorStore((s) => s.addElement)
 
     return (
         <div
@@ -16,7 +16,7 @@ export const ComponentLibrary: React.FC = () => {
 
             <button
                 onClick={() =>
-                    addBlock({
+                    addElement({
                         type: 'text',
                         content: 'New Text Block',
                     })
