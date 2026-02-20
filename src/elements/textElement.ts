@@ -7,6 +7,5 @@ export const TextElement: EditorElement = {
 
     create: () => ({
         type: 'text',
-        content: 'New Text',
     }),
 }

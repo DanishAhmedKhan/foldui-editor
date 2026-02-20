@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { SchemaBuilder } from 'foldui-builder'
 import { NodeSpec } from 'foldui'
+import { EditorElement } from '../elements/types'
 
 type NodeSpecType = typeof NodeSpec
 
@@ -27,7 +28,7 @@ type EditorState = {
 
     getRenderSchema: () => unknown
 
-    addElement: () => void
+    addElement: (element: EditorElement) => void
 }
 
 export const useEditorStore = create<EditorState>((set, get) => {
