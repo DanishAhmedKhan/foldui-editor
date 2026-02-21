@@ -88,19 +88,17 @@ export const useEditorStore = create<EditorState>((set, get) => {
         },
 
         addElement: (element) => {
-            const { selectedNodeId } = get()
+            const { selectedNodeId, builder } = get()
+            if (!selectedNodeId) return
 
-            const fragment = element.create({
+            const newId = element.create({
                 selectedNodeId,
-                rootSchema: builder.toRenderSchema(),
+                builder,
             })
-
-            if (selectedNodeId) {
-                builder.add(fragment).into(selectedNodeId)
-            }
 
             set((state) => ({
                 version: state.version + 1,
+                // selectedNodeId: newId ?? state.selectedNodeId,
             }))
         },
     }

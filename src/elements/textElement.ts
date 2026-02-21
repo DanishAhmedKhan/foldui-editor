@@ -5,10 +5,7 @@ export const TextElement: EditorElement = {
     name: 'Text',
     description: 'Simple text block',
 
-    create: () => ({
-        type: 'text',
-        props: {
-            text: 'This is a text',
-        },
-    }),
+    create: ({ selectedNodeId, builder }) => {
+        return builder.add('text').into(selectedNodeId)
+    },
 }

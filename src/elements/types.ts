@@ -1,6 +1,8 @@
+import { SchemaBuilder } from 'foldui-builder'
+
 export interface EditorElementContext {
     selectedNodeId: string | null
-    rootSchema: any
+    builder: SchemaBuilder
 }
 
 export interface EditorElement {

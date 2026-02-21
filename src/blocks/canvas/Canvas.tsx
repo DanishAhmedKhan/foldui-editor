@@ -13,6 +13,7 @@ export const Canvas: React.FC = () => {
 
     useEffect(() => {
         const schema = builder.toRenderSchema()
+        console.log(schema)
         if (!schema) return
 
         const htmlElement = Fold.render(schema)
