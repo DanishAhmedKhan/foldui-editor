@@ -9,13 +9,14 @@ export interface FolduiEditorProps {
 }
 
 export const Editor: React.FC<FolduiEditorProps> = ({ schema }) => {
-    // const setRenderSchema = useEditorStore((s) => s.setRenderSchema)
+    const builder = useEditorStore((s) => s.builder)
+    const selectNode = useEditorStore((s) => s.selectNode)
+    const version = useEditorStore((s) => s.version)
 
-    // // Push schema into builder store whenever it changes
-    // useEffect(() => {
-    //     if (!schema) return
-    //     setRenderSchema(schema)
-    // }, [schema, setRenderSchema])
+    useEffect(() => {
+        const rootId = builder.getRootId()
+        selectNode(rootId)
+    }, [])
 
     useEffect(() => {
         registerDefaultElements()

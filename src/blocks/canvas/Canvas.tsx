@@ -7,17 +7,17 @@ export const Canvas: React.FC = () => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
     const version = useEditorStore((s) => s.version)
-    const getRenderSchema = useEditorStore((s) => s.getRenderSchema)
+    const builder = useEditorStore((s) => s.builder)
 
     const { mountIntoIframe } = useIframeBridge(iframeRef)
 
     useEffect(() => {
-        const schema = getRenderSchema()
+        const schema = builder.toRenderSchema()
         if (!schema) return
 
-        const htmlElement = Fold.render(schema as any)
+        const htmlElement = Fold.render(schema)
         mountIntoIframe(htmlElement)
-    }, [version, getRenderSchema, mountIntoIframe])
+    }, [version, builder, mountIntoIframe])
 
     return (
         <div

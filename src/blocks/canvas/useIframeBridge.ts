@@ -9,13 +9,27 @@ export function useIframeBridge(iframeRef: React.RefObject<HTMLIFrameElement | n
             const doc = iframe.contentDocument
             if (!doc) return
 
+            if (!doc.body.innerHTML) {
+                doc.open()
+                doc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head></head>
+            <body>
+              <div id="root"></div>
+            </body>
+          </html>
+        `)
+                doc.close()
+            }
+
             const root = doc.getElementById('root')
             if (!root) return
 
             root.innerHTML = ''
             root.appendChild(element)
         },
-        [iframeRef], // ✅ FIX: include iframeRef
+        [iframeRef], // ✅ FIX
     )
 
     return { mountIntoIframe }

@@ -7,5 +7,8 @@ export const TextElement: EditorElement = {
 
     create: () => ({
         type: 'text',
+        props: {
+            text: 'This is a text',
+        },
     }),
 }

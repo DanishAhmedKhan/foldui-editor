@@ -97,12 +97,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
             if (selectedNodeId) {
                 builder.add(fragment).into(selectedNodeId)
-            } else {
-                // fallback to root insertion
-                builder.add(fragment).intoRoot?.() ?? builder.add(fragment)
             }
 
-            // 🔥 trigger canvas update
             set((state) => ({
                 version: state.version + 1,
             }))
