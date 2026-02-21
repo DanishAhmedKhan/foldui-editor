@@ -6,17 +6,18 @@ import { useIframeBridge } from './useIframeBridge'
 export const Canvas: React.FC = () => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
-    const renderSchema = useEditorStore((s) => s.getRenderSchema)
+    const version = useEditorStore((s) => s.version)
+    const getRenderSchema = useEditorStore((s) => s.getRenderSchema)
 
     const { mountIntoIframe } = useIframeBridge(iframeRef)
 
     useEffect(() => {
-        if (!renderSchema) return
+        const schema = getRenderSchema()
+        if (!schema) return
 
-        const htmlElement = Fold.render(renderSchema as any)
-
+        const htmlElement = Fold.render(schema as any)
         mountIntoIframe(htmlElement)
-    }, [renderSchema, mountIntoIframe])
+    }, [version, getRenderSchema, mountIntoIframe])
 
     return (
         <div

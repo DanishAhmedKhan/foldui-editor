@@ -37,7 +37,7 @@ export const Editor: React.FC<FolduiEditorProps> = ({ schema }) => {
                     position: 'absolute',
                     top: '0',
                     left: '0',
-                    border: '1px solid black',
+                    borderBottom: '1px solid black',
                 }}
             ></div>
 
@@ -48,10 +48,33 @@ export const Editor: React.FC<FolduiEditorProps> = ({ schema }) => {
                     position: 'absolute',
                     top: '70px',
                     left: '0',
-                    border: '1px solid black',
+                    borderRight: '1px solid black',
                 }}
             >
                 <ElementLibrary />
+            </div>
+
+            <div
+                style={{
+                    width: 'calc(100% - 300px)',
+                    height: 'calc(100% - 70px)',
+                    position: 'absolute',
+                    top: '70px',
+                    left: '300px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <div
+                    style={{
+                        width: 'calc(100% - 100px)',
+                        height: 'calc(100% - 100px)',
+                        border: '1px solid black',
+                    }}
+                >
+                    <Canvas />
+                </div>
             </div>
         </div>
     )

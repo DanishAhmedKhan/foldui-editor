@@ -6,8 +6,6 @@ export const ElementLibrary: React.FC = () => {
     const elements = useElementRegistry((s) => s.elements)
     const addElement = useEditorStore((s) => s.addElement)
 
-    console.log(elements)
-
     return (
         <div
             style={{

@@ -33,13 +33,10 @@ type EditorState = {
 
 export const useEditorStore = create<EditorState>((set, get) => {
     const builder = new SchemaBuilder<NodeSpecType>(NodeSpec)
-    const version = 0
 
     return {
-        version,
-
         builder,
-
+        version: 0,
         selectedNodeId: null,
 
         selectNode: (id) => set({ selectedNodeId: id }),
@@ -91,22 +88,24 @@ export const useEditorStore = create<EditorState>((set, get) => {
         },
 
         addElement: (element) => {
-            const { renderSchema, selectedNodeId } = get()
-
-            if (!renderSchema) return
+            const { selectedNodeId } = get()
 
             const fragment = element.create({
                 selectedNodeId,
-                rootSchema: renderSchema,
+                rootSchema: builder.toRenderSchema(),
             })
 
-            // Simple root append for now
-            set({
-                renderSchema: {
-                    ...renderSchema,
-                    children: [...(renderSchema.children || []), fragment],
-                },
-            })
+            if (selectedNodeId) {
+                builder.add(fragment).into(selectedNodeId)
+            } else {
+                // fallback to root insertion
+                builder.add(fragment).intoRoot?.() ?? builder.add(fragment)
+            }
+
+            // 🔥 trigger canvas update
+            set((state) => ({
+                version: state.version + 1,
+            }))
         },
     }
 })
