@@ -12,11 +12,17 @@ export const Canvas: React.FC = () => {
     const { mountIntoIframe } = useIframeBridge(iframeRef)
 
     useEffect(() => {
+        const iframe = iframeRef.current
+        if (!iframe) return
+
+        const doc = iframe.contentDocument
+        if (!doc) return
+
         const schema = builder.toRenderSchema()
         console.log(schema)
         if (!schema) return
 
-        const htmlElement = Fold.render(schema)
+        const htmlElement = Fold.render(schema, doc)
         mountIntoIframe(htmlElement)
     }, [version, builder, mountIntoIframe])
 
