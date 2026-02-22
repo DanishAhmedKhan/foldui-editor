@@ -6,6 +6,16 @@ export const TextElement: EditorElement = {
     description: 'Simple text block',
 
     create: ({ selectedNodeId, builder }) => {
-        return builder.add('text').into(selectedNodeId)
+        return builder
+            .add({
+                type: 'text',
+                props: {
+                    tag: 'h1',
+                },
+                style: {
+                    text: { fontSize: '30px' },
+                },
+            })
+            .into(selectedNodeId)
     },
 }

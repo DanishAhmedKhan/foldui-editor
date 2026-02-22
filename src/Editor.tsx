@@ -3,6 +3,7 @@ import { useEditorStore } from './store/useEditorStore'
 import { Canvas } from './blocks/canvas/Canvas'
 import { ElementLibrary } from './blocks/elementLibrary/ElementLibrary'
 import { registerDefaultElements } from './elements/initDefaultElements'
+import { Responsive } from './blocks/responsive/Responsive'
 
 export interface FolduiEditorProps {
     schema?: unknown
@@ -26,51 +27,41 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
             style={{
                 width: '100%',
                 height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 border: '1px solid #ddd',
                 background: '#fafafa',
+                boxSizing: 'border-box',
+                overflow: 'hidden',
             }}
         >
             <div
                 style={{
-                    width: '100%',
-                    height: '70px',
-                    position: 'absolute',
-                    top: '0',
-                    left: '0',
+                    height: 70,
                     borderBottom: '1px solid black',
-                }}
-            ></div>
-
-            <div
-                style={{
-                    width: '300px',
-                    height: 'calc(100% - 70px)',
-                    position: 'absolute',
-                    top: '70px',
-                    left: '0',
-                    borderRight: '1px solid black',
+                    flexShrink: 0,
                 }}
             >
-                <ElementLibrary />
+                <Responsive />
             </div>
 
-            <div
-                style={{
-                    width: 'calc(100% - 300px)',
-                    height: 'calc(100% - 70px)',
-                    position: 'absolute',
-                    top: '70px',
-                    left: '300px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-            >
+            <div style={{ display: 'flex', flex: 1 }}>
                 <div
                     style={{
-                        width: 'calc(100% - 100px)',
-                        height: 'calc(100% - 100px)',
-                        border: '1px solid black',
+                        flex: '0 0 300px',
+                        borderRight: '1px solid black',
+                        overflowY: 'auto',
+                    }}
+                >
+                    <ElementLibrary />
+                </div>
+
+                <div
+                    style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
                 >
                     <Canvas />

@@ -5,6 +5,8 @@ import { EditorElement } from '../elements/types'
 
 type NodeSpecType = typeof NodeSpec
 
+type Device = 'responsive' | 'desktop' | 'tablet' | 'mobile'
+
 type EditorState = {
     builder: SchemaBuilder<NodeSpecType>
     version: number
@@ -22,6 +24,15 @@ type EditorState = {
     getRenderSchema: () => FoldNode
 
     addElement: (element: EditorElement) => void
+
+    device: Device
+    customWidths: {
+        desktop: number
+        tablet: number
+        mobile: number
+    }
+    setDevice: (device: Device) => void
+    setCustomWidth: (device: Exclude<Device, 'responsive'>, width: number) => void
 }
 
 export const useEditorStore = create<EditorState>((set, get) => {
@@ -94,5 +105,23 @@ export const useEditorStore = create<EditorState>((set, get) => {
                 // selectedNodeId: newId ?? state.selectedNodeId,
             }))
         },
+
+        device: 'responsive',
+
+        customWidths: {
+            desktop: 1200,
+            tablet: 768,
+            mobile: 375,
+        },
+
+        setDevice: (device) => set({ device }),
+
+        setCustomWidth: (device, width) =>
+            set((state) => ({
+                customWidths: {
+                    ...state.customWidths,
+                    [device]: width,
+                },
+            })),
     }
 })

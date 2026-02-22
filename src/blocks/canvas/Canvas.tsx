@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { useEditorStore } from '../../store/useEditorStore'
 import { Fold } from 'foldui'
 import { useIframeBridge } from './useIframeBridge'
+import { CanvasFrame } from './CanvasFrame'
 
 export const Canvas: React.FC = () => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
@@ -26,23 +27,17 @@ export const Canvas: React.FC = () => {
     }, [version, builder, mountIntoIframe])
 
     return (
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                background: '#f5f5f5',
-            }}
-        >
+        <CanvasFrame>
             <iframe
                 ref={iframeRef}
                 style={{
                     width: '100%',
                     height: '100%',
                     border: 'none',
-                    background: 'white',
+                    background: 'lightblue',
                 }}
                 sandbox="allow-scripts allow-same-origin"
             />
-        </div>
+        </CanvasFrame>
     )
 }
