@@ -1,16 +1,9 @@
 import { create } from 'zustand'
-import { SchemaBuilder } from 'foldui-builder'
-import { NodeSpec } from 'foldui'
+import { NodeInput, SchemaBuilder } from 'foldui-builder'
+import { FoldNode, NodeSpec } from 'foldui'
 import { EditorElement } from '../elements/types'
 
 type NodeSpecType = typeof NodeSpec
-
-type AddNodeOptions = {
-    type: string
-    props?: Record<string, unknown>
-    style?: Record<string, unknown>
-    responsive?: Record<string, unknown>
-}
 
 type EditorState = {
     builder: SchemaBuilder<NodeSpecType>
@@ -19,14 +12,14 @@ type EditorState = {
 
     selectNode: (id: string | null) => void
 
-    addNode: (options: AddNodeOptions, parentId: string) => string
+    addNode: (options: NodeInput, parentId: string) => string
     removeNode: (id: string) => void
 
     updateField: (id: string, field: string, value: unknown) => void
     patchField: (id: string, field: string, patch: Record<string, unknown>) => void
     patchPath: (id: string, path: string | (string | number)[], value: unknown) => void
 
-    getRenderSchema: () => unknown
+    getRenderSchema: () => FoldNode
 
     addElement: (element: EditorElement) => void
 }
@@ -91,7 +84,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
             const { selectedNodeId, builder } = get()
             if (!selectedNodeId) return
 
-            const newId = element.create({
+            element.create({
                 selectedNodeId,
                 builder,
             })

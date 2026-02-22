@@ -1,8 +1,8 @@
-import { SchemaBuilder } from 'foldui-builder'
+import { GenericNodeSpec, SchemaBuilder } from 'foldui-builder'
 
 export interface EditorElementContext {
-    selectedNodeId: string | null
-    builder: SchemaBuilder
+    selectedNodeId: string
+    builder: SchemaBuilder<GenericNodeSpec>
 }
 
 export interface EditorElement {
@@ -10,5 +10,5 @@ export interface EditorElement {
     name: string
     description?: string
     icon?: React.ReactNode
-    create: (context: EditorElementContext) => any
+    create: (context: EditorElementContext) => string
 }

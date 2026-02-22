@@ -9,17 +9,24 @@ export function useIframeBridge(iframeRef: React.RefObject<HTMLIFrameElement | n
             const doc = iframe.contentDocument
             if (!doc) return
 
-            if (!doc.body.innerHTML) {
+            const FOLD_GLOBAL_STYLE_ID = '__fold_global_styles__'
+
+            if (!doc.getElementById(FOLD_GLOBAL_STYLE_ID)) {
                 doc.open()
                 doc.write(`
-          <!DOCTYPE html>
-          <html>
-            <head></head>
-            <body>
-              <div id="root"></div>
-            </body>
-          </html>
-        `)
+                    <!DOCTYPE html>
+                    <html>
+                        <head>
+                            <style id="${FOLD_GLOBAL_STYLE_ID}">
+                                * { padding: 0; margin: 0; box-sizing: border-box; }
+                                html, body { width: 100%; height: 100%; }
+                            </style>
+                        </head>
+                        <body>
+                        <div id="root"></div>
+                        </body>
+                    </html>
+                `)
                 doc.close()
             }
 
@@ -29,7 +36,7 @@ export function useIframeBridge(iframeRef: React.RefObject<HTMLIFrameElement | n
             root.innerHTML = ''
             root.appendChild(element)
         },
-        [iframeRef], // ✅ FIX
+        [iframeRef],
     )
 
     return { mountIntoIframe }

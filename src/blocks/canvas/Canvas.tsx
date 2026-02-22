@@ -19,7 +19,6 @@ export const Canvas: React.FC = () => {
         if (!doc) return
 
         const schema = builder.toRenderSchema()
-        console.log(schema)
         if (!schema) return
 
         const htmlElement = Fold.render(schema, doc)
