@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { useEditorStore } from '../../store/useEditorStore'
 
 export const ResizeHandle: React.FC = () => {
@@ -16,11 +16,21 @@ export const ResizeHandle: React.FC = () => {
     const MIN_WIDTH = 320
     const MAX_WIDTH = 2000
 
+    const startWidthRef = useRef(0)
+    const startMouseOffsetRef = useRef(0)
+
     const onPointerDown = (e: React.PointerEvent) => {
         if (device === 'responsive' || !frameRef.current) return
 
         const handle = handleRef.current
         if (!handle) return
+
+        const rect = frameRef.current.getBoundingClientRect()
+        const rightEdge = rect.right
+
+        startWidthRef.current = rect.width
+
+        startMouseOffsetRef.current = e.clientX - rightEdge
 
         handle.setPointerCapture(e.pointerId)
 
@@ -35,14 +45,12 @@ export const ResizeHandle: React.FC = () => {
         const rect = frameRef.current.getBoundingClientRect()
         const centerX = rect.left + rect.width / 2
 
-        const rawWidth = (e.clientX - centerX) * 2
+        const adjustedMouseX = e.clientX - startMouseOffsetRef.current
 
-        if (rawWidth <= MIN_WIDTH) {
-            frameRef.current.style.width = `${MIN_WIDTH}px`
-            return
-        }
+        let newWidth = (adjustedMouseX - centerX) * 2
 
-        const newWidth = Math.min(rawWidth, MAX_WIDTH)
+        if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH
+        if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH
 
         frameRef.current.style.width = `${newWidth}px`
     }
@@ -65,23 +73,81 @@ export const ResizeHandle: React.FC = () => {
         setIsResizing(false)
     }
 
+    const [isHovered, setIsHovered] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
+
     return (
         <div
             ref={handleRef}
-            onPointerDown={onPointerDown}
+            onPointerDown={(e) => {
+                setIsDragging(true)
+                onPointerDown(e)
+            }}
             onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
+            onPointerUp={(e) => {
+                setIsDragging(false)
+                onPointerUp(e)
+            }}
+            onPointerEnter={() => setIsHovered(true)}
+            onPointerLeave={() => setIsHovered(false)}
             style={{
                 position: 'absolute',
-                right: 0,
+                right: -16,
                 top: 0,
-                width: 6,
+                width: 16,
                 height: '100%',
-                background: 'blue',
                 cursor: 'ew-resize',
-                zIndex: 10,
+                zIndex: 50,
                 touchAction: 'none',
+                background: 'transparent',
             }}
-        />
+        >
+            <div
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: 4,
+                    height: '100%',
+                    background: isDragging ? '#2563eb' : isHovered ? '#3b82f6' : 'transparent',
+                    pointerEvents: 'none',
+                }}
+            />
+            <div
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 16,
+                    height: 40,
+                    borderTopRightRadius: 6,
+                    borderBottomRightRadius: 6,
+                    background: isDragging ? '#2563eb' : isHovered ? '#3b82f6' : '#2f2f2f',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 3,
+                    pointerEvents: 'none',
+                }}
+            >
+                <div
+                    style={{
+                        width: 2,
+                        height: 14,
+                        background: '#8c8c8c',
+                        borderRadius: 1,
+                    }}
+                />
+                <div
+                    style={{
+                        width: 2,
+                        height: 14,
+                        background: '#8c8c8c',
+                        borderRadius: 1,
+                    }}
+                />
+            </div>
+        </div>
     )
 }
