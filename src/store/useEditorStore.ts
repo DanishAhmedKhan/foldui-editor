@@ -7,6 +7,8 @@ type NodeSpecType = typeof NodeSpec
 
 type Device = 'responsive' | 'desktop' | 'tablet' | 'mobile'
 
+type EditorMode = 'edit' | 'preview'
+
 type EditorState = {
     builder: SchemaBuilder<NodeSpecType>
     version: number
@@ -36,6 +38,8 @@ type EditorState = {
 
     isResizing: boolean
     setIsResizing: (value: boolean) => void
+
+    mode: EditorMode
 }
 
 export const useEditorStore = create<EditorState>((set, get) => {
@@ -129,5 +133,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
         isResizing: false,
         setIsResizing: (value: boolean) => set({ isResizing: value }),
+
+        mode: 'edit',
     }
 })

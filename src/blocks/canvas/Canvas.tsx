@@ -1,30 +1,13 @@
-import React, { useEffect, useRef } from 'react'
-import { useEditorStore } from '../../store/useEditorStore'
-import { Fold } from 'foldui'
-import { useIframeBridge } from './useIframeBridge'
+import React, { useRef } from 'react'
 import { CanvasFrame } from './CanvasFrame'
+import { useCanvasRenderer } from './useCanvasRenderer'
+import { useCanvasOverlay } from './useCanvasOverlay'
 
 export const Canvas: React.FC = () => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
-    const version = useEditorStore((s) => s.version)
-    const builder = useEditorStore((s) => s.builder)
-
-    const { mountIntoIframe } = useIframeBridge(iframeRef)
-
-    useEffect(() => {
-        const iframe = iframeRef.current
-        if (!iframe) return
-
-        const doc = iframe.contentDocument
-        if (!doc) return
-
-        const schema = builder.toRenderSchema()
-        if (!schema) return
-
-        const htmlElement = Fold.render(schema, doc)
-        mountIntoIframe(htmlElement)
-    }, [version, builder, mountIntoIframe])
+    useCanvasRenderer(iframeRef)
+    useCanvasOverlay(iframeRef)
 
     return (
         <CanvasFrame>
