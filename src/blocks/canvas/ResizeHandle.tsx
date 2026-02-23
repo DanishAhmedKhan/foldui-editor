@@ -1,63 +1,86 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useEditorStore } from '../../store/useEditorStore'
 
 export const ResizeHandle: React.FC = () => {
     const device = useEditorStore((s) => s.device)
-    const customWidths = useEditorStore((s) => s.customWidths)
     const setCustomWidth = useEditorStore((s) => s.setCustomWidth)
+    const setIsResizing = useEditorStore((s) => s.setIsResizing)
 
-    const [dragging, setDragging] = useState(false)
-
-    const startX = useRef(0)
-    const startWidth = useRef(0)
-
-    const onMouseDown = (e: React.MouseEvent) => {
-        if (device === 'responsive') return
-
-        startX.current = e.clientX
-        startWidth.current = customWidths[device]
-
-        setDragging(true)
-    }
+    const frameRef = useRef<HTMLDivElement | null>(null)
+    const handleRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        if (!dragging) return
+        frameRef.current = document.getElementById('canvas-frame') as HTMLDivElement
+    }, [])
 
-        const onMouseMove = (e: MouseEvent) => {
-            if (device === 'responsive') return
+    const MIN_WIDTH = 320
+    const MAX_WIDTH = 2000
 
-            const delta = e.clientX - startX.current
-            const newWidth = startWidth.current + delta
+    const onPointerDown = (e: React.PointerEvent) => {
+        if (device === 'responsive' || !frameRef.current) return
 
-            const clamped = Math.max(280, Math.min(newWidth, 2000))
+        const handle = handleRef.current
+        if (!handle) return
 
-            setCustomWidth(device, clamped)
+        handle.setPointerCapture(e.pointerId)
+
+        setIsResizing(true)
+        document.body.style.userSelect = 'none'
+        document.body.style.cursor = 'ew-resize'
+    }
+
+    const onPointerMove = (e: React.PointerEvent) => {
+        if (!frameRef.current || !e.currentTarget.hasPointerCapture(e.pointerId)) return
+
+        const rect = frameRef.current.getBoundingClientRect()
+        const centerX = rect.left + rect.width / 2
+
+        const rawWidth = (e.clientX - centerX) * 2
+
+        if (rawWidth <= MIN_WIDTH) {
+            frameRef.current.style.width = `${MIN_WIDTH}px`
+            return
         }
 
-        const onMouseUp = () => {
-            setDragging(false)
+        const newWidth = Math.min(rawWidth, MAX_WIDTH)
+
+        frameRef.current.style.width = `${newWidth}px`
+    }
+
+    const onPointerUp = (e: React.PointerEvent) => {
+        if (!frameRef.current) return
+
+        const handle = handleRef.current
+        if (handle && handle.hasPointerCapture(e.pointerId)) {
+            handle.releasePointerCapture(e.pointerId)
         }
 
-        window.addEventListener('mousemove', onMouseMove)
-        window.addEventListener('mouseup', onMouseUp)
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
 
-        return () => {
-            window.removeEventListener('mousemove', onMouseMove)
-            window.removeEventListener('mouseup', onMouseUp)
+        const finalWidth = frameRef.current.offsetWidth
+        if (device !== 'responsive') {
+            setCustomWidth(device, finalWidth)
         }
-    }, [dragging, device, setCustomWidth])
+        setIsResizing(false)
+    }
 
     return (
         <div
-            onMouseDown={onMouseDown}
+            ref={handleRef}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
             style={{
                 position: 'absolute',
                 right: 0,
                 top: 0,
                 width: 6,
                 height: '100%',
-                cursor: 'ew-resize',
                 background: 'blue',
+                cursor: 'ew-resize',
+                zIndex: 10,
+                touchAction: 'none',
             }}
         />
     )

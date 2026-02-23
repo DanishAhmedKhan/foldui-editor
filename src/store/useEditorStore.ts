@@ -33,6 +33,9 @@ type EditorState = {
     }
     setDevice: (device: Device) => void
     setCustomWidth: (device: Exclude<Device, 'responsive'>, width: number) => void
+
+    isResizing: boolean
+    setIsResizing: (value: boolean) => void
 }
 
 export const useEditorStore = create<EditorState>((set, get) => {
@@ -123,5 +126,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
                     [device]: width,
                 },
             })),
+
+        isResizing: false,
+        setIsResizing: (value: boolean) => set({ isResizing: value }),
     }
 })

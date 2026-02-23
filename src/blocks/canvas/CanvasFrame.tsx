@@ -9,6 +9,7 @@ interface Props {
 export const CanvasFrame: React.FC<Props> = ({ children }) => {
     const device = useEditorStore((s) => s.device)
     const customWidths = useEditorStore((s) => s.customWidths)
+    const isResizing = useEditorStore((s) => s.isResizing)
 
     const isFixed = device !== 'responsive'
 
@@ -16,12 +17,13 @@ export const CanvasFrame: React.FC<Props> = ({ children }) => {
 
     return (
         <div
+            id="canvas-frame"
             style={{
                 position: 'relative',
                 width,
                 height: '100%',
                 background: '#f5f5f5',
-                transition: 'width 0.2s ease',
+                transition: isResizing ? 'none' : 'width 0.2s ease',
             }}
         >
             {children}
