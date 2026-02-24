@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { useEditorStore } from '../../store/useEditorStore'
 
-export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement>) {
+export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | null>) {
     const version = useEditorStore((s) => s.version)
     const builder = useEditorStore((s) => s.builder)
 
@@ -12,7 +12,6 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement>) 
             const rect = target.getBoundingClientRect()
             const doc = target.ownerDocument
 
-            // ===== Border =====
             const box = doc.createElement('div')
 
             Object.assign(box.style, {
@@ -28,12 +27,11 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement>) 
 
             root.appendChild(box)
 
-            // ===== Actions =====
             const actions = doc.createElement('div')
 
             Object.assign(actions.style, {
                 position: 'fixed',
-                top: rect.top - 30 + 'px',
+                top: rect.top + 'px',
                 left: rect.left + 'px',
                 background: '#111',
                 color: 'white',
@@ -70,7 +68,6 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement>) 
         const doc = iframe.contentDocument
         if (!doc) return
 
-        // ===== Create Overlay Root (Once) =====
         let overlayRoot = doc.getElementById('__foldui_overlay_root__') as HTMLElement
 
         if (!overlayRoot) {
@@ -98,7 +95,11 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement>) 
 
             const nodeId = target.closest('[data-fui-id]')?.getAttribute('data-fui-id')
 
-            if (!nodeId) return
+            if (!nodeId) {
+                overlayRoot.innerHTML = ''
+                currentNodeId = null
+                return
+            }
 
             if (nodeId === currentNodeId) return
             currentNodeId = nodeId

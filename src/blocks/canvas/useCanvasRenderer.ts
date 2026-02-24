@@ -3,7 +3,7 @@ import { Fold } from 'foldui'
 import { useEditorStore } from '../../store/useEditorStore'
 import { useIframeBridge } from './useIframeBridge'
 
-export function useCanvasRenderer(iframeRef: React.RefObject<HTMLIFrameElement>) {
+export function useCanvasRenderer(iframeRef: React.RefObject<HTMLIFrameElement | null>) {
     const version = useEditorStore((s) => s.version)
     const builder = useEditorStore((s) => s.builder)
 
