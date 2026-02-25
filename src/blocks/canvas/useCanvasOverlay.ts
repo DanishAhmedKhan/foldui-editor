@@ -95,7 +95,7 @@ export function useCanvasOverlay({ iframeRef }: Props) {
     }, [iframeRef, version, selectedNodeId, setSelectedNodeId])
 
     useEffect(() => {
-        const iframe = iframeRef.current
+        const iframe = iframeRef.current!
         if (!iframe) return
 
         const doc = iframe.contentDocument!
@@ -106,32 +106,60 @@ export function useCanvasOverlay({ iframeRef }: Props) {
 
         doc.body.style.position = 'relative'
 
-        const existing = doc.getElementById('__overlay_root__')
-        if (existing) existing.remove()
+        let root = doc.getElementById('__overlay_root__') as HTMLElement | null
 
-        const root = doc.createElement('div')
-        root.id = '__overlay_root__'
+        if (!root) {
+            root = doc.createElement('div')
+            root.id = '__overlay_root__'
 
-        Object.assign(root.style, {
-            position: 'absolute',
-            inset: '0',
-            pointerEvents: 'none',
-            zIndex: '999999',
-        })
+            Object.assign(root.style, {
+                position: 'absolute',
+                inset: '0',
+                pointerEvents: 'none',
+                zIndex: '999999',
+            })
 
-        doc.body.appendChild(root)
+            doc.body.appendChild(root)
+
+            const emptyLayer = doc.createElement('div')
+            emptyLayer.id = '__empty_layer__'
+            emptyLayer.style.position = 'absolute'
+            emptyLayer.style.inset = '0'
+            emptyLayer.style.pointerEvents = 'none'
+
+            const hoverLayer = doc.createElement('div')
+            hoverLayer.id = '__hover_layer__'
+            hoverLayer.style.position = 'absolute'
+            hoverLayer.style.inset = '0'
+            hoverLayer.style.pointerEvents = 'none'
+
+            const selectionLayer = doc.createElement('div')
+            selectionLayer.id = '__selection_layer__'
+            selectionLayer.style.position = 'absolute'
+            selectionLayer.style.inset = '0'
+            selectionLayer.style.pointerEvents = 'none'
+
+            root.appendChild(emptyLayer)
+            root.appendChild(hoverLayer)
+            root.appendChild(selectionLayer)
+        }
+
+        const hoverLayer = doc.getElementById('__hover_layer__') as HTMLElement
+        const selectionLayer = doc.getElementById('__selection_layer__') as HTMLElement
 
         function render() {
-            root.innerHTML = ''
+            hoverLayer.innerHTML = ''
+            selectionLayer.innerHTML = ''
 
             const idsToRender = new Set<string>()
 
-            if (selectedNodeId) idsToRender.add(selectedNodeId)
-            if (hoveredNodeId && hoveredNodeId !== selectedNodeId) {
+            if (hoveredNodeId) {
                 idsToRender.add(hoveredNodeId)
             }
 
-            if (idsToRender.size === 0) return
+            if (selectedNodeId) {
+                idsToRender.add(selectedNodeId)
+            }
 
             idsToRender.forEach((id) => {
                 const el = doc.querySelector(`[data-fui-id="${id}"]`) as HTMLElement | null
@@ -143,6 +171,8 @@ export function useCanvasOverlay({ iframeRef }: Props) {
 
                 const isSelected = selectedNodeId === id
                 const colors = isSelected ? OVERLAY_COLORS.selected : OVERLAY_COLORS.hover
+
+                const layer = isSelected ? selectionLayer : hoverLayer
 
                 const box = doc.createElement('div')
 
@@ -158,7 +188,7 @@ export function useCanvasOverlay({ iframeRef }: Props) {
                     pointerEvents: 'none',
                 })
 
-                root.appendChild(box)
+                layer.appendChild(box)
 
                 const actionBar = createActionBar(
                     doc,
@@ -194,10 +224,9 @@ export function useCanvasOverlay({ iframeRef }: Props) {
                 actionBar.dataset.overlayAction = 'true'
                 actionBar.style.pointerEvents = 'auto'
                 actionBar.style.position = 'absolute'
-                actionBar.style.background = colors.border
                 actionBar.style.borderRadius = '6px'
 
-                root.appendChild(actionBar)
+                layer.appendChild(actionBar)
             })
         }
 

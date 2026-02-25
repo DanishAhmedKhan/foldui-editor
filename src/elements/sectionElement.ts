@@ -41,7 +41,7 @@ export const SectionElement: EditorElement = {
                 })
                 .into(rowId)
 
-            builder.add('text').into(containerId)
+            // builder.add('text').into(containerId)
         }
 
         return sectionId

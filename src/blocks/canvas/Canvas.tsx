@@ -2,12 +2,14 @@ import React, { useRef } from 'react'
 import { CanvasFrame } from './CanvasFrame'
 import { useCanvasRenderer } from './useCanvasRenderer'
 import { useCanvasOverlay } from './useCanvasOverlay'
+import { useCanvasEmptyState } from './useCanvasEmptyState'
 
 export const Canvas: React.FC = () => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
     useCanvasRenderer(iframeRef)
     useCanvasOverlay({ iframeRef })
+    useCanvasEmptyState({ iframeRef })
 
     return (
         <CanvasFrame>
