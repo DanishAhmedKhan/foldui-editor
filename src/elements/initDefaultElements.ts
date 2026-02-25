@@ -1,4 +1,5 @@
 import { ButtonElement } from './buttonElement'
+import { SectionElement } from './sectionElement'
 import { TextElement } from './textElement'
 import { useElementRegistry } from './useElementRegistry'
 
@@ -7,4 +8,5 @@ export function registerDefaultElements() {
 
     registerElement(TextElement)
     registerElement(ButtonElement)
+    registerElement(SectionElement)
 }

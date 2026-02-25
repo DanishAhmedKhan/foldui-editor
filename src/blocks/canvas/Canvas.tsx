@@ -17,7 +17,7 @@ export const Canvas: React.FC = () => {
                     width: '100%',
                     height: '100%',
                     border: 'none',
-                    background: 'lightblue',
+                    background: 'white',
                 }}
                 sandbox="allow-scripts allow-same-origin"
             />
