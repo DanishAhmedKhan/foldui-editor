@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createActionBar } from './overlay/createActionBar'
 import { useEditorStore } from '../../store/useEditorStore'
 import { icons } from '../../assets/icons'
@@ -27,6 +27,9 @@ export function useCanvasOverlay({ iframeRef }: Props) {
 
     const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
+    const hoverTimeoutRef = useRef<number | null>(null)
+    const OVERLAY_DELAY = 50
+
     useEffect(() => {
         const iframe = iframeRef.current
         if (!iframe) return
@@ -39,14 +42,25 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         }
 
         function handleMouseMove(e: MouseEvent) {
-            const nodeId = getNodeId(e.target as HTMLElement)
+            const target = e.target as HTMLElement
 
-            if (!nodeId || nodeId === selectedNodeId) {
-                setHoveredNodeId(null)
+            if (target.closest('[data-overlay-action="true"]')) {
                 return
             }
 
-            setHoveredNodeId(nodeId)
+            const nodeId = getNodeId(target)
+
+            if (hoverTimeoutRef.current) {
+                window.clearTimeout(hoverTimeoutRef.current)
+            }
+
+            hoverTimeoutRef.current = window.setTimeout(() => {
+                if (!nodeId || nodeId === selectedNodeId) {
+                    setHoveredNodeId(null)
+                } else {
+                    setHoveredNodeId(nodeId)
+                }
+            }, OVERLAY_DELAY)
         }
 
         function handleClick(e: MouseEvent) {
@@ -63,15 +77,18 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         }
 
         function handleLeave() {
+            if (hoverTimeoutRef.current) {
+                window.clearTimeout(hoverTimeoutRef.current)
+            }
             setHoveredNodeId(null)
         }
 
-        doc.addEventListener('mousemove', handleMouseMove)
+        doc.addEventListener('mouseover', handleMouseMove)
         doc.addEventListener('click', handleClick)
         doc.addEventListener('mouseleave', handleLeave)
 
         return () => {
-            doc.removeEventListener('mousemove', handleMouseMove)
+            doc.removeEventListener('mouseover', handleMouseMove)
             doc.removeEventListener('click', handleClick)
             doc.removeEventListener('mouseleave', handleLeave)
         }
@@ -84,9 +101,11 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         const doc = iframe.contentDocument!
         if (!doc) return
 
+        const win = doc.defaultView!
+        if (!win) return
+
         doc.body.style.position = 'relative'
 
-        // Remove old root
         const existing = doc.getElementById('__overlay_root__')
         if (existing) existing.remove()
 
@@ -102,80 +121,84 @@ export function useCanvasOverlay({ iframeRef }: Props) {
 
         doc.body.appendChild(root)
 
-        const activeNodeId = selectedNodeId ?? hoveredNodeId
-        if (!activeNodeId) return
-
-        const el = doc.querySelector(`[data-fui-id="${activeNodeId}"]`) as HTMLElement | null
-        if (!el) return
-
-        const win = doc.defaultView!
-        if (!win) return
-
         function render() {
             root.innerHTML = ''
 
-            const rect = el!.getBoundingClientRect()
-            const scrollX = win.scrollX
-            const scrollY = win.scrollY
+            const idsToRender = new Set<string>()
 
-            const isSelected = selectedNodeId === activeNodeId
-            const colors = isSelected ? OVERLAY_COLORS.selected : OVERLAY_COLORS.hover
+            if (selectedNodeId) idsToRender.add(selectedNodeId)
+            if (hoveredNodeId && hoveredNodeId !== selectedNodeId) {
+                idsToRender.add(hoveredNodeId)
+            }
 
-            const box = doc.createElement('div')
+            if (idsToRender.size === 0) return
 
-            Object.assign(box.style, {
-                position: 'absolute',
-                top: rect.top + scrollY + 'px',
-                left: rect.left + scrollX + 'px',
-                width: rect.width + 'px',
-                height: rect.height + 'px',
-                border: `2px solid ${colors.border}`,
-                background: colors.background,
-                boxSizing: 'border-box',
-                pointerEvents: 'none',
-            })
+            idsToRender.forEach((id) => {
+                const el = doc.querySelector(`[data-fui-id="${id}"]`) as HTMLElement | null
+                if (!el) return
 
-            root.appendChild(box)
+                const rect = el.getBoundingClientRect()
+                const scrollX = win.scrollX
+                const scrollY = win.scrollY
 
-            if (!isSelected) return
+                const isSelected = selectedNodeId === id
+                const colors = isSelected ? OVERLAY_COLORS.selected : OVERLAY_COLORS.hover
 
-            const actionBar = createActionBar(
-                doc,
-                {
-                    ...rect,
-                    top: rect.top + scrollY,
-                    left: rect.left + scrollX,
-                } as DOMRect,
-                [{ type: 'copy' }, { type: 'move' }, { type: 'delete' }],
-                {
-                    placement: 'top-left',
-                    offset: 0,
-                    outside: false,
-                },
-                'horizontal',
-                (type) => {
-                    if (type === 'delete') builder.remove(activeNodeId!)
-                    if (type === 'copy') builder.copy(activeNodeId)
-                    if (type === 'move') console.log('move')
-                },
-                {
-                    background: colors.border,
-                    iconColor: 'white',
-                    iconBackground: 'transparent',
-                    customIcons: {
-                        delete: icons.delete,
-                        copy: icons.copy,
-                        move: icons.move,
+                const box = doc.createElement('div')
+
+                Object.assign(box.style, {
+                    position: 'absolute',
+                    top: rect.top + scrollY + 'px',
+                    left: rect.left + scrollX + 'px',
+                    width: rect.width + 'px',
+                    height: rect.height + 'px',
+                    border: `2px solid ${colors.border}`,
+                    background: colors.background,
+                    boxSizing: 'border-box',
+                    pointerEvents: 'none',
+                })
+
+                root.appendChild(box)
+
+                const actionBar = createActionBar(
+                    doc,
+                    {
+                        ...rect,
+                        top: rect.top + scrollY,
+                        left: rect.left + scrollX,
+                    } as DOMRect,
+                    [{ type: 'copy' }, { type: 'move' }, { type: 'delete' }],
+                    {
+                        placement: 'top-left',
+                        offset: 0,
+                        outside: false,
                     },
-                },
-            )
+                    'horizontal',
+                    (type) => {
+                        if (type === 'delete') builder.remove(id)
+                        if (type === 'copy') builder.copy(id)
+                        if (type === 'move') console.log('move')
+                    },
+                    {
+                        background: colors.border,
+                        iconColor: 'white',
+                        iconBackground: 'transparent',
+                        customIcons: {
+                            delete: icons.delete,
+                            copy: icons.copy,
+                            move: icons.move,
+                        },
+                    },
+                )
 
-            actionBar.style.pointerEvents = 'auto'
-            actionBar.style.position = 'absolute'
-            actionBar.style.background = colors.border
-            actionBar.style.borderRadius = '6px'
+                actionBar.dataset.overlayAction = 'true'
+                actionBar.style.pointerEvents = 'auto'
+                actionBar.style.position = 'absolute'
+                actionBar.style.background = colors.border
+                actionBar.style.borderRadius = '6px'
 
-            root.appendChild(actionBar)
+                root.appendChild(actionBar)
+            })
         }
 
         render()
