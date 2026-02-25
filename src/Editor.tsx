@@ -11,7 +11,7 @@ export interface FolduiEditorProps {
 
 export const Editor: React.FC<FolduiEditorProps> = () => {
     const builder = useEditorStore((s) => s.builder)
-    const selectNode = useEditorStore((s) => s.selectNode)
+    const selectNode = useEditorStore((s) => s.setSelectedNodeId)
 
     useEffect(() => {
         const rootId = builder.getRootId()

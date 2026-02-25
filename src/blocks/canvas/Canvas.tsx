@@ -7,7 +7,7 @@ export const Canvas: React.FC = () => {
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
     useCanvasRenderer(iframeRef)
-    useCanvasOverlay(iframeRef)
+    useCanvasOverlay({ iframeRef })
 
     return (
         <CanvasFrame>

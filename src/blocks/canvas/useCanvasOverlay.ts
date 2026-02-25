@@ -1,138 +1,48 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useState } from 'react'
+import { createActionBar } from './overlay/createActionBar'
 import { useEditorStore } from '../../store/useEditorStore'
 
-export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | null>) {
+interface Props {
+    iframeRef: React.RefObject<HTMLIFrameElement | null>
+}
+
+export function useCanvasOverlay({ iframeRef }: Props) {
     const version = useEditorStore((s) => s.version)
     const builder = useEditorStore((s) => s.builder)
+
     const selectedNodeId = useEditorStore((s) => s.selectedNodeId)
-    const setSelectedNodeId = useEditorStore((s) => s.selectNode)
+    const setSelectedNodeId = useEditorStore((s) => s.setSelectedNodeId)
 
-    const showOverlay = useCallback(
-        (target: HTMLElement, root: HTMLElement, nodeId: string) => {
-            root.innerHTML = ''
-
-            const rect = target.getBoundingClientRect()
-            const doc = target.ownerDocument
-
-            const box = doc.createElement('div')
-
-            Object.assign(box.style, {
-                position: 'fixed',
-                top: rect.top + 'px',
-                left: rect.left + 'px',
-                width: rect.width + 'px',
-                height: rect.height + 'px',
-                border: '2px solid #4f46e5',
-                boxSizing: 'border-box',
-                pointerEvents: 'none',
-            })
-
-            root.appendChild(box)
-
-            const actions = doc.createElement('div')
-
-            Object.assign(actions.style, {
-                position: 'fixed',
-                top: rect.top + 'px',
-                left: rect.left + 'px',
-                background: '#111',
-                color: 'white',
-                padding: '4px 8px',
-                fontSize: '12px',
-                borderRadius: '4px',
-                pointerEvents: 'auto',
-                display: 'flex',
-                gap: '6px',
-            })
-
-            actions.innerHTML = `
-                <button data-action="delete">Delete</button>
-            `
-
-            actions.addEventListener('click', (e) => {
-                const action = (e.target as HTMLElement).dataset.action
-                if (!action) return
-
-                if (action === 'delete') {
-                    builder.remove(nodeId)
-                }
-            })
-
-            root.appendChild(actions)
-        },
-        [builder],
-    )
+    const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
     useEffect(() => {
         const iframe = iframeRef.current
         if (!iframe) return
 
-        const doc = iframe.contentDocument
-        if (!doc) return
-
-        let overlayRoot = doc.getElementById('__foldui_overlay_root__') as HTMLElement
-        let selectionRoot = doc.getElementById('__fui_selection_overlay_root__') as HTMLElement
-
-        if (!overlayRoot) {
-            overlayRoot = doc.createElement('div')
-            overlayRoot.id = '__foldui_overlay_root__'
-
-            Object.assign(overlayRoot.style, {
-                position: 'fixed',
-                top: '0',
-                left: '0',
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-                zIndex: '999999',
-            })
-
-            doc.body.appendChild(overlayRoot)
+        function getDoc() {
+            return iframe.contentDocument
         }
 
-        if (!selectionRoot) {
-            selectionRoot = doc.createElement('div')
-            selectionRoot.id = '__fui_selection_overlay_root__'
-            Object.assign(selectionRoot.style, {
-                position: 'fixed',
-                inset: '0',
-                pointerEvents: 'none',
-                zIndex: '999999',
-            })
-            doc.body.appendChild(selectionRoot)
+        function getNodeId(target: HTMLElement | null) {
+            return target?.closest('[data-fui-id]')?.getAttribute('data-fui-id') ?? null
         }
-
-        let currentNodeId: string | null = null
 
         function handleMouseMove(e: MouseEvent) {
-            const target = e.target as HTMLElement
-            if (!target) return
+            const doc = getDoc()
+            if (!doc) return
 
-            const nodeId = target.closest('[data-fui-id]')?.getAttribute('data-fui-id')
+            const nodeId = getNodeId(e.target as HTMLElement)
 
-            if (nodeId === selectedNodeId) return
-
-            if (!nodeId) {
-                overlayRoot.innerHTML = ''
-                currentNodeId = null
+            if (!nodeId || nodeId === selectedNodeId) {
+                setHoveredNodeId(null)
                 return
             }
 
-            if (nodeId === currentNodeId) return
-            currentNodeId = nodeId
-
-            const el = doc?.querySelector(`[data-fui-id="${nodeId}"]`) as HTMLElement
-
-            if (!el) return
-
-            showOverlay(el, overlayRoot, nodeId)
+            setHoveredNodeId(nodeId)
         }
 
         function handleClick(e: MouseEvent) {
-            const target = e.target as HTMLElement
-            if (!target) return
-
-            const nodeId = target.closest('[data-fui-id]')?.getAttribute('data-fui-id')
+            const nodeId = getNodeId(e.target as HTMLElement)
 
             if (!nodeId) {
                 setSelectedNodeId(null)
@@ -141,72 +51,120 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | 
 
             e.preventDefault()
             e.stopPropagation()
-
             setSelectedNodeId(nodeId)
         }
 
-        function handleMouseLeave() {
-            overlayRoot.innerHTML = ''
-            currentNodeId = null
+        function handleLeave() {
+            setHoveredNodeId(null)
         }
 
+        const doc = iframe.contentDocument
+        if (!doc) return
+
         doc.addEventListener('mousemove', handleMouseMove)
-        doc.addEventListener('mouseleave', handleMouseLeave)
         doc.addEventListener('click', handleClick)
+        doc.addEventListener('mouseleave', handleLeave)
 
         return () => {
             doc.removeEventListener('mousemove', handleMouseMove)
-            doc.removeEventListener('mouseleave', handleMouseLeave)
             doc.removeEventListener('click', handleClick)
+            doc.removeEventListener('mouseleave', handleLeave)
         }
-    }, [version, iframeRef, showOverlay, setSelectedNodeId, selectedNodeId])
+    }, [iframeRef, version, selectedNodeId, setSelectedNodeId])
 
     useEffect(() => {
         const iframe = iframeRef.current
         if (!iframe) return
 
-        const doc = iframe.contentDocument
+        const doc = iframe.contentDocument!
         if (!doc) return
 
-        let selectionRoot = doc.getElementById('__fui_selection_overlay__') as HTMLElement
+        // remove old overlay
+        const existing = doc.getElementById('__overlay_root__')
+        if (existing) existing.remove()
 
-        if (!selectionRoot) {
-            selectionRoot = doc.createElement('div')
-            selectionRoot.id = '__fui_selection_overlay__'
+        const root = doc.createElement('div')
+        root.id = '__overlay_root__'
 
-            Object.assign(selectionRoot.style, {
-                position: 'fixed',
-                inset: '0',
-                pointerEvents: 'none',
-                zIndex: '999999',
-            })
+        Object.assign(root.style, {
+            position: 'absolute',
+            top: '0px',
+            left: '0px',
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: '999999',
+        })
 
-            doc.body.appendChild(selectionRoot)
-        }
+        doc.body.appendChild(root)
 
-        selectionRoot.innerHTML = ''
+        const activeNodeId = selectedNodeId ?? hoveredNodeId
+        if (!activeNodeId) return
 
-        if (!selectedNodeId) return
-
-        const el = doc.querySelector(`[data-fui-id="${selectedNodeId}"]`) as HTMLElement
+        const el = doc.querySelector(`[data-fui-id="${activeNodeId}"]`) as HTMLElement | null
 
         if (!el) return
 
-        const rect = el.getBoundingClientRect()
+        function render() {
+            root.innerHTML = ''
 
-        const box = doc.createElement('div')
+            const rect = el.getBoundingClientRect()
+            const scrollX = doc.defaultView?.scrollX ?? 0
+            const scrollY = doc.defaultView?.scrollY ?? 0
 
-        Object.assign(box.style, {
-            position: 'fixed',
-            top: rect.top + 'px',
-            left: rect.left + 'px',
-            width: rect.width + 'px',
-            height: rect.height + 'px',
-            border: '2px solid orange',
-            boxSizing: 'border-box',
-            pointerEvents: 'none',
-        })
+            const isSelected = selectedNodeId === activeNodeId
+            const borderColor = isSelected ? 'orange' : 'dodgerblue'
 
-        selectionRoot.appendChild(box)
-    }, [selectedNodeId, version, iframeRef])
+            const box = doc.createElement('div')
+            Object.assign(box.style, {
+                position: 'absolute',
+                top: rect.top + scrollY + 'px',
+                left: rect.left + scrollX + 'px',
+                width: rect.width + 'px',
+                height: rect.height + 'px',
+                border: `2px solid ${borderColor}`,
+                boxSizing: 'border-box',
+                pointerEvents: 'none',
+            })
+
+            root.appendChild(box)
+
+            const actionBar = createActionBar(
+                doc!,
+                {
+                    ...rect,
+                    top: rect.top + scrollY,
+                    left: rect.left + scrollX,
+                } as DOMRect,
+                [{ type: 'copy' }, { type: 'move' }, { type: 'delete' }],
+                {
+                    placement: 'top-right',
+                    offset: 8,
+                    outside: true,
+                },
+                'horizontal',
+                (type) => {
+                    if (type === 'delete') builder.remove(activeNodeId!)
+                    if (type === 'copy') builder.duplicate(activeNodeId)
+                    if (type === 'move') console.log('move')
+                },
+            )
+
+            actionBar.style.pointerEvents = 'auto'
+            actionBar.style.position = 'absolute'
+
+            root.appendChild(actionBar)
+        }
+
+        render()
+
+        const win = doc.defaultView
+        win?.addEventListener('scroll', render)
+        win?.addEventListener('resize', render)
+
+        return () => {
+            win?.removeEventListener('scroll', render)
+            win?.removeEventListener('resize', render)
+        }
+    }, [iframeRef, selectedNodeId, hoveredNodeId, version, builder])
 }

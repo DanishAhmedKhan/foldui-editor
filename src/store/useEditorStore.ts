@@ -14,7 +14,7 @@ type EditorState = {
     version: number
 
     selectedNodeId: string | null
-    selectNode: (id: string | null) => void
+    setSelectedNodeId: (id: string | null) => void
 
     addNode: (options: NodeInput, parentId: string) => string
     removeNode: (id: string) => void
@@ -50,7 +50,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         version: 0,
         selectedNodeId: null,
 
-        selectNode: (id) => set({ selectedNodeId: id }),
+        setSelectedNodeId: (id) => set({ selectedNodeId: id }),
 
         addNode: (options, parentId) => {
             const id = builder.add(options).into(parentId)
