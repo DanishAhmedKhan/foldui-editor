@@ -4,6 +4,8 @@ import { useEditorStore } from '../../store/useEditorStore'
 export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | null>) {
     const version = useEditorStore((s) => s.version)
     const builder = useEditorStore((s) => s.builder)
+    const selectedNodeId = useEditorStore((s) => s.selectedNodeId)
+    const setSelectedNodeId = useEditorStore((s) => s.selectNode)
 
     const showOverlay = useCallback(
         (target: HTMLElement, root: HTMLElement, nodeId: string) => {
@@ -69,6 +71,7 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | 
         if (!doc) return
 
         let overlayRoot = doc.getElementById('__foldui_overlay_root__') as HTMLElement
+        let selectionRoot = doc.getElementById('__fui_selection_overlay_root__') as HTMLElement
 
         if (!overlayRoot) {
             overlayRoot = doc.createElement('div')
@@ -87,6 +90,18 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | 
             doc.body.appendChild(overlayRoot)
         }
 
+        if (!selectionRoot) {
+            selectionRoot = doc.createElement('div')
+            selectionRoot.id = '__fui_selection_overlay_root__'
+            Object.assign(selectionRoot.style, {
+                position: 'fixed',
+                inset: '0',
+                pointerEvents: 'none',
+                zIndex: '999999',
+            })
+            doc.body.appendChild(selectionRoot)
+        }
+
         let currentNodeId: string | null = null
 
         function handleMouseMove(e: MouseEvent) {
@@ -94,6 +109,8 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | 
             if (!target) return
 
             const nodeId = target.closest('[data-fui-id]')?.getAttribute('data-fui-id')
+
+            if (nodeId === selectedNodeId) return
 
             if (!nodeId) {
                 overlayRoot.innerHTML = ''
@@ -111,6 +128,23 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | 
             showOverlay(el, overlayRoot, nodeId)
         }
 
+        function handleClick(e: MouseEvent) {
+            const target = e.target as HTMLElement
+            if (!target) return
+
+            const nodeId = target.closest('[data-fui-id]')?.getAttribute('data-fui-id')
+
+            if (!nodeId) {
+                setSelectedNodeId(null)
+                return
+            }
+
+            e.preventDefault()
+            e.stopPropagation()
+
+            setSelectedNodeId(nodeId)
+        }
+
         function handleMouseLeave() {
             overlayRoot.innerHTML = ''
             currentNodeId = null
@@ -118,10 +152,61 @@ export function useCanvasOverlay(iframeRef: React.RefObject<HTMLIFrameElement | 
 
         doc.addEventListener('mousemove', handleMouseMove)
         doc.addEventListener('mouseleave', handleMouseLeave)
+        doc.addEventListener('click', handleClick)
 
         return () => {
             doc.removeEventListener('mousemove', handleMouseMove)
             doc.removeEventListener('mouseleave', handleMouseLeave)
+            doc.removeEventListener('click', handleClick)
         }
-    }, [version, iframeRef, showOverlay])
+    }, [version, iframeRef, showOverlay, setSelectedNodeId, selectedNodeId])
+
+    useEffect(() => {
+        const iframe = iframeRef.current
+        if (!iframe) return
+
+        const doc = iframe.contentDocument
+        if (!doc) return
+
+        let selectionRoot = doc.getElementById('__fui_selection_overlay__') as HTMLElement
+
+        if (!selectionRoot) {
+            selectionRoot = doc.createElement('div')
+            selectionRoot.id = '__fui_selection_overlay__'
+
+            Object.assign(selectionRoot.style, {
+                position: 'fixed',
+                inset: '0',
+                pointerEvents: 'none',
+                zIndex: '999999',
+            })
+
+            doc.body.appendChild(selectionRoot)
+        }
+
+        selectionRoot.innerHTML = ''
+
+        if (!selectedNodeId) return
+
+        const el = doc.querySelector(`[data-fui-id="${selectedNodeId}"]`) as HTMLElement
+
+        if (!el) return
+
+        const rect = el.getBoundingClientRect()
+
+        const box = doc.createElement('div')
+
+        Object.assign(box.style, {
+            position: 'fixed',
+            top: rect.top + 'px',
+            left: rect.left + 'px',
+            width: rect.width + 'px',
+            height: rect.height + 'px',
+            border: '2px solid orange',
+            boxSizing: 'border-box',
+            pointerEvents: 'none',
+        })
+
+        selectionRoot.appendChild(box)
+    }, [selectedNodeId, version, iframeRef])
 }

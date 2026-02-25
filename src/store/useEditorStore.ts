@@ -12,8 +12,8 @@ type EditorMode = 'edit' | 'preview'
 type EditorState = {
     builder: SchemaBuilder<NodeSpecType>
     version: number
-    selectedNodeId: string | null
 
+    selectedNodeId: string | null
     selectNode: (id: string | null) => void
 
     addNode: (options: NodeInput, parentId: string) => string

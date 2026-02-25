@@ -1,19 +1,19 @@
 import { EditorElement } from './types'
 
-export const TextElement: EditorElement = {
-    type: 'text',
-    name: 'Text',
-    description: 'Simple text block',
+export const HeadingElement: EditorElement = {
+    type: 'heading',
+    name: 'Heading',
+    description: 'Heading',
 
     create: ({ selectedNodeId, builder }) => {
         return builder
             .add({
                 type: 'text',
                 props: {
-                    tag: 'p',
+                    tag: 'h1',
                 },
                 style: {
-                    text: { fontSize: '16px' },
+                    text: { fontSize: '24px' },
                 },
             })
             .into(selectedNodeId)
