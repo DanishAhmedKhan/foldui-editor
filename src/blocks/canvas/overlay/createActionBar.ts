@@ -1,8 +1,15 @@
-import { createIcon } from './icons'
+import { createIcon } from './createIcons'
 import { computePosition, PositionOptions } from './overlayPositioning'
 
 export interface ActionConfig {
     type: 'delete' | 'copy' | 'move'
+}
+
+export interface ActionBarOptions {
+    background?: string
+    iconColor?: string
+    iconBackground?: string
+    customIcons?: Partial<Record<'delete' | 'copy' | 'move', string>>
 }
 
 export function createActionBar(
@@ -12,16 +19,17 @@ export function createActionBar(
     position: PositionOptions,
     direction: 'horizontal' | 'vertical',
     onAction: (type: string) => void,
+    options?: ActionBarOptions,
 ) {
     const container = doc.createElement('div')
 
     Object.assign(container.style, {
-        position: 'fixed',
+        position: 'absolute',
         display: 'flex',
         gap: '4px',
         padding: '4px',
-        background: '#111',
-        borderRadius: '6px',
+        background: options?.background ?? '#111',
+        // borderRadius: '6px',
         pointerEvents: 'auto',
         flexDirection: direction === 'horizontal' ? 'row' : 'column',
         zIndex: '1000000',
@@ -33,11 +41,17 @@ export function createActionBar(
     container.style.left = pos.left + 'px'
 
     actions.forEach((a) => {
-        const btn = createIcon(doc, a.type)
+        const btn = createIcon(doc, a.type, {
+            customSvg: options?.customIcons?.[a.type],
+            background: options?.iconBackground,
+            color: options?.iconColor,
+        })
+
         btn.addEventListener('click', (e) => {
             e.stopPropagation()
             onAction(a.type)
         })
+
         container.appendChild(btn)
     })
 

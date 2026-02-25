@@ -1,9 +1,21 @@
 import { useEffect, useState } from 'react'
 import { createActionBar } from './overlay/createActionBar'
 import { useEditorStore } from '../../store/useEditorStore'
+import { icons } from '../../assets/icons'
 
 interface Props {
     iframeRef: React.RefObject<HTMLIFrameElement | null>
+}
+
+const OVERLAY_COLORS = {
+    hover: {
+        border: 'dodgerblue',
+        background: 'rgba(30,144,255,0.08)',
+    },
+    selected: {
+        border: 'orange',
+        background: 'rgba(255,165,0,0.08)',
+    },
 }
 
 export function useCanvasOverlay({ iframeRef }: Props) {
@@ -19,18 +31,14 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         const iframe = iframeRef.current
         if (!iframe) return
 
-        function getDoc() {
-            return iframe.contentDocument
-        }
+        const doc = iframe.contentDocument
+        if (!doc) return
 
         function getNodeId(target: HTMLElement | null) {
             return target?.closest('[data-fui-id]')?.getAttribute('data-fui-id') ?? null
         }
 
         function handleMouseMove(e: MouseEvent) {
-            const doc = getDoc()
-            if (!doc) return
-
             const nodeId = getNodeId(e.target as HTMLElement)
 
             if (!nodeId || nodeId === selectedNodeId) {
@@ -58,9 +66,6 @@ export function useCanvasOverlay({ iframeRef }: Props) {
             setHoveredNodeId(null)
         }
 
-        const doc = iframe.contentDocument
-        if (!doc) return
-
         doc.addEventListener('mousemove', handleMouseMove)
         doc.addEventListener('click', handleClick)
         doc.addEventListener('mouseleave', handleLeave)
@@ -79,7 +84,9 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         const doc = iframe.contentDocument!
         if (!doc) return
 
-        // remove old overlay
+        doc.body.style.position = 'relative'
+
+        // Remove old root
         const existing = doc.getElementById('__overlay_root__')
         if (existing) existing.remove()
 
@@ -88,10 +95,7 @@ export function useCanvasOverlay({ iframeRef }: Props) {
 
         Object.assign(root.style, {
             position: 'absolute',
-            top: '0px',
-            left: '0px',
-            width: '100%',
-            height: '100%',
+            inset: '0',
             pointerEvents: 'none',
             zIndex: '999999',
         })
@@ -102,35 +106,41 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         if (!activeNodeId) return
 
         const el = doc.querySelector(`[data-fui-id="${activeNodeId}"]`) as HTMLElement | null
-
         if (!el) return
+
+        const win = doc.defaultView!
+        if (!win) return
 
         function render() {
             root.innerHTML = ''
 
-            const rect = el.getBoundingClientRect()
-            const scrollX = doc.defaultView?.scrollX ?? 0
-            const scrollY = doc.defaultView?.scrollY ?? 0
+            const rect = el!.getBoundingClientRect()
+            const scrollX = win.scrollX
+            const scrollY = win.scrollY
 
             const isSelected = selectedNodeId === activeNodeId
-            const borderColor = isSelected ? 'orange' : 'dodgerblue'
+            const colors = isSelected ? OVERLAY_COLORS.selected : OVERLAY_COLORS.hover
 
             const box = doc.createElement('div')
+
             Object.assign(box.style, {
                 position: 'absolute',
                 top: rect.top + scrollY + 'px',
                 left: rect.left + scrollX + 'px',
                 width: rect.width + 'px',
                 height: rect.height + 'px',
-                border: `2px solid ${borderColor}`,
+                border: `2px solid ${colors.border}`,
+                background: colors.background,
                 boxSizing: 'border-box',
                 pointerEvents: 'none',
             })
 
             root.appendChild(box)
 
+            if (!isSelected) return
+
             const actionBar = createActionBar(
-                doc!,
+                doc,
                 {
                     ...rect,
                     top: rect.top + scrollY,
@@ -138,33 +148,44 @@ export function useCanvasOverlay({ iframeRef }: Props) {
                 } as DOMRect,
                 [{ type: 'copy' }, { type: 'move' }, { type: 'delete' }],
                 {
-                    placement: 'top-right',
-                    offset: 8,
-                    outside: true,
+                    placement: 'top-left',
+                    offset: 0,
+                    outside: false,
                 },
                 'horizontal',
                 (type) => {
                     if (type === 'delete') builder.remove(activeNodeId!)
-                    if (type === 'copy') builder.duplicate(activeNodeId)
+                    if (type === 'copy') builder.copy(activeNodeId)
                     if (type === 'move') console.log('move')
+                },
+                {
+                    background: colors.border,
+                    iconColor: 'white',
+                    iconBackground: 'transparent',
+                    customIcons: {
+                        delete: icons.delete,
+                        copy: icons.copy,
+                        move: icons.move,
+                    },
                 },
             )
 
             actionBar.style.pointerEvents = 'auto'
             actionBar.style.position = 'absolute'
+            actionBar.style.background = colors.border
+            actionBar.style.borderRadius = '6px'
 
             root.appendChild(actionBar)
         }
 
         render()
 
-        const win = doc.defaultView
-        win?.addEventListener('scroll', render)
-        win?.addEventListener('resize', render)
+        win.addEventListener('scroll', render)
+        win.addEventListener('resize', render)
 
         return () => {
-            win?.removeEventListener('scroll', render)
-            win?.removeEventListener('resize', render)
+            win.removeEventListener('scroll', render)
+            win.removeEventListener('resize', render)
         }
     }, [iframeRef, selectedNodeId, hoveredNodeId, version, builder])
 }
