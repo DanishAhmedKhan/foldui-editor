@@ -6,6 +6,9 @@ export const ElementLibrary: React.FC = () => {
     const elements = useElementRegistry((s) => s.elements)
     const addElement = useEditorStore((s) => s.addElement)
 
+    const startDragging = useEditorStore((s) => s.startDragging)
+    const stopDragging = useEditorStore((s) => s.stopDragging)
+
     return (
         <div
             style={{
@@ -30,6 +33,12 @@ export const ElementLibrary: React.FC = () => {
                         cursor: 'pointer',
                         background: '#fff',
                     }}
+                    draggable
+                    onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = 'copy'
+                        startDragging(element)
+                    }}
+                    onDragEnd={() => stopDragging()}
                     onClick={() => addElement(element)}
                 >
                     {element.icon && <div style={{ marginBottom: 6 }}>{element.icon}</div>}

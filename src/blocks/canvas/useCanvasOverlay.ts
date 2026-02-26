@@ -28,7 +28,7 @@ export function useCanvasOverlay({ iframeRef }: Props) {
     const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
     const hoverTimeoutRef = useRef<number | null>(null)
-    const OVERLAY_DELAY = 50
+    const OVERLAY_DELAY = 10
 
     useEffect(() => {
         const iframe = iframeRef.current

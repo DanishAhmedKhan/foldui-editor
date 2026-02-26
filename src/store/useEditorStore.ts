@@ -9,6 +9,11 @@ type Device = 'responsive' | 'desktop' | 'tablet' | 'mobile'
 
 type EditorMode = 'edit' | 'preview'
 
+type DragState = {
+    elementType: string
+    elementDefinition: unknown
+}
+
 type EditorState = {
     builder: SchemaBuilder<NodeSpecType>
     version: number
@@ -40,6 +45,10 @@ type EditorState = {
     setIsResizing: (value: boolean) => void
 
     mode: EditorMode
+
+    draggingElement: DragState | null
+    startDragging: (el: unknown) => void
+    stopDragging: () => void
 }
 
 export const useEditorStore = create<EditorState>((set, get) => {
@@ -135,5 +144,17 @@ export const useEditorStore = create<EditorState>((set, get) => {
         setIsResizing: (value: boolean) => set({ isResizing: value }),
 
         mode: 'edit',
+
+        draggingElement: null,
+
+        startDragging: (element) =>
+            set({
+                draggingElement: {
+                    elementType: element.type,
+                    elementDefinition: element,
+                },
+            }),
+
+        stopDragging: () => set({ draggingElement: null }),
     }
 })
