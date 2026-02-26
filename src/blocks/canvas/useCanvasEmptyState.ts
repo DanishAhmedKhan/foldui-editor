@@ -8,6 +8,9 @@ interface Props {
 export function useCanvasEmptyState({ iframeRef }: Props) {
     const version = useEditorStore((s) => s.version)
     const builder = useEditorStore((s) => s.builder)
+    const addElement = useEditorStore((s) => s.addElement)
+    const draggingElement = useEditorStore((s) => s.draggingElement)
+    const stopDragging = useEditorStore((s) => s.stopDragging)
 
     useEffect(() => {
         const iframe = iframeRef.current
@@ -16,14 +19,32 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
         const doc = iframe.contentDocument!
         if (!doc) return
 
-        // function isEditorEmptySlot(el: Element) {
-        //     return el instanceof HTMLElement && el.dataset.fuiEmptySlot === 'true'
-        // }
+        let placeholder: HTMLElement | null = null
 
-        // function isEmptyContainer(el: HTMLElement) {
-        //     const realChildren = Array.from(el.children).filter((child) => !isEditorEmptySlot(child))
-        //     return realChildren.length === 0
-        // }
+        function createPlaceholder() {
+            if (placeholder) return placeholder
+
+            const el = doc.createElement('div')
+            el.dataset.fuiPlaceholder = 'true'
+            el.dataset.editorIgnore = 'true'
+
+            Object.assign(el.style, {
+                height: '8px',
+                background: '#3b82f6',
+                borderRadius: '4px',
+                margin: '6px 0',
+                width: '100%',
+            })
+
+            placeholder = el
+            return el
+        }
+
+        function removePlaceholder() {
+            if (placeholder && placeholder.parentElement) {
+                placeholder.remove()
+            }
+        }
 
         function createEmptySlot(parentId: string) {
             const slot = doc.createElement('div')
@@ -36,22 +57,9 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 border: '1px dashed #ddd',
-                // background: 'rgba(0,0,0,0.02)',
                 width: '100%',
                 padding: '20px',
             })
-
-            slot.style.transition = 'background 0.15s ease, border-color 0.15s ease'
-
-            slot.onmouseenter = () => {
-                slot.style.borderColor = '#3b82f6'
-                slot.style.background = 'rgba(59,130,246,0.04)'
-            }
-
-            slot.onmouseleave = () => {
-                slot.style.borderColor = '#ddd'
-                slot.style.background = 'transparent'
-            }
 
             const plus = doc.createElement('button')
             plus.innerText = '+'
@@ -63,25 +71,7 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
                 border: '2px dashed #ccc',
                 background: 'white',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '18px',
-                fontWeight: 'bold',
             })
-
-            plus.onmouseenter = () => {
-                plus.style.borderColor = '#3b82f6'
-                plus.style.background = '#eff6ff'
-                plus.style.transform = 'scale(1.08)'
-            }
-
-            plus.onmouseleave = () => {
-                plus.style.borderColor = '#ccc'
-                plus.style.background = 'white'
-                plus.style.transform = 'scale(1)'
-            }
 
             plus.onclick = (e) => {
                 e.stopPropagation()
@@ -89,11 +79,10 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
             }
 
             slot.appendChild(plus)
-
             return slot
         }
 
-        function render() {
+        function renderEmptyStates() {
             const sections = Array.from(doc.querySelectorAll('[data-fui-type="section"]')) as HTMLElement[]
 
             sections.forEach((section) => {
@@ -102,7 +91,6 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
                 const row = section.querySelector(':scope > [data-fui-type="container"]') as HTMLElement | null
 
                 if (!row) return
-
                 row.dataset.editorIgnore = 'true'
 
                 const cols = Array.from(row.querySelectorAll(':scope > [data-fui-type="container"]')) as HTMLElement[]
@@ -116,24 +104,101 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
                     )
 
                     const realChildren = Array.from(col.children).filter(
-                        (child) => !(child instanceof HTMLElement && child.dataset.fuiEmptySlot === 'true'),
+                        (child) =>
+                            !(
+                                child instanceof HTMLElement &&
+                                (child.dataset.fuiEmptySlot === 'true' || child.dataset.fuiPlaceholder === 'true')
+                            ),
                     )
 
-                    const isEmpty = realChildren.length === 0
-
-                    if (isEmpty) {
+                    if (realChildren.length === 0) {
                         if (!existingSlot) {
-                            const slot = createEmptySlot(parentId)
-                            col.appendChild(slot)
+                            col.appendChild(createEmptySlot(parentId))
                         }
                     } else {
-                        if (existingSlot) {
-                            existingSlot.remove()
-                        }
+                        if (existingSlot) existingSlot.remove()
                     }
                 })
             })
         }
-        render()
-    }, [iframeRef, version, builder])
+
+        function handleDragOver(e: DragEvent) {
+            if (!draggingElement) return
+
+            e.preventDefault()
+
+            const target = e.target as HTMLElement
+
+            const col = target.closest(
+                '[data-fui-type="container"]:not([data-editor-ignore="true"])',
+            ) as HTMLElement | null
+
+            if (!col) {
+                removePlaceholder()
+                return
+            }
+
+            const children = Array.from(col.children).filter(
+                (c) => !(c as HTMLElement).dataset.fuiPlaceholder && !(c as HTMLElement).dataset.fuiEmptySlot,
+            )
+
+            const ph = createPlaceholder()
+
+            if (children.length === 0) {
+                col.appendChild(ph)
+                return
+            }
+
+            for (const child of children) {
+                const rect = child.getBoundingClientRect()
+                const middle = rect.top + rect.height / 2
+
+                if (e.clientY < middle) {
+                    col.insertBefore(ph, child)
+                    return
+                }
+            }
+
+            col.appendChild(ph)
+        }
+
+        function handleDrop(e: DragEvent) {
+            if (!draggingElement) return
+            e.preventDefault()
+
+            if (!placeholder) return
+
+            const col = placeholder.closest('[data-fui-type="container"]') as HTMLElement | null
+
+            if (!col) return
+
+            const parentId = col.dataset.fuiId
+            if (!parentId) return
+
+            const index = Array.from(col.children).indexOf(placeholder)
+
+            addElement(draggingElement.elementDefinition, parentId, index)
+
+            removePlaceholder()
+            stopDragging()
+        }
+
+        function handleDragLeave(e: DragEvent) {
+            if (!doc.body.contains(e.relatedTarget as Node)) {
+                removePlaceholder()
+            }
+        }
+
+        doc.addEventListener('dragover', handleDragOver)
+        doc.addEventListener('drop', handleDrop)
+        doc.addEventListener('dragleave', handleDragLeave)
+
+        renderEmptyStates()
+
+        return () => {
+            doc.removeEventListener('dragover', handleDragOver)
+            doc.removeEventListener('drop', handleDrop)
+            doc.removeEventListener('dragleave', handleDragLeave)
+        }
+    }, [iframeRef, version, builder, draggingElement, addElement, stopDragging])
 }
