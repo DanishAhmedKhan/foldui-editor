@@ -38,13 +38,19 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         if (!doc) return
 
         function getNodeId(target: HTMLElement | null) {
-            return target?.closest('[data-fui-id]')?.getAttribute('data-fui-id') ?? null
+            if (!target) return null
+
+            if (target.closest('[data-editor-ignore="true"]')) {
+                return null
+            }
+
+            return target.closest('[data-fui-id]')?.getAttribute('data-fui-id') ?? null
         }
 
         function handleMouseMove(e: MouseEvent) {
             const target = e.target as HTMLElement
 
-            if (target.closest('[data-overlay-action="true"]')) {
+            if (target.closest('[data-overlay-action="true"]') || target.closest('[data-editor-ignore="true"]')) {
                 return
             }
 
@@ -64,7 +70,13 @@ export function useCanvasOverlay({ iframeRef }: Props) {
         }
 
         function handleClick(e: MouseEvent) {
-            const nodeId = getNodeId(e.target as HTMLElement)
+            const target = e.target as HTMLElement
+
+            if (target.closest('[data-editor-ignore="true"]')) {
+                return
+            }
+
+            const nodeId = getNodeId(target)
 
             if (!nodeId) {
                 setSelectedNodeId(null)
@@ -83,12 +95,12 @@ export function useCanvasOverlay({ iframeRef }: Props) {
             setHoveredNodeId(null)
         }
 
-        doc.addEventListener('mouseover', handleMouseMove)
+        doc.addEventListener('mousemove', handleMouseMove)
         doc.addEventListener('click', handleClick)
         doc.addEventListener('mouseleave', handleLeave)
 
         return () => {
-            doc.removeEventListener('mouseover', handleMouseMove)
+            doc.removeEventListener('mousemove', handleMouseMove)
             doc.removeEventListener('click', handleClick)
             doc.removeEventListener('mouseleave', handleLeave)
         }
@@ -121,12 +133,6 @@ export function useCanvasOverlay({ iframeRef }: Props) {
 
             doc.body.appendChild(root)
 
-            const emptyLayer = doc.createElement('div')
-            emptyLayer.id = '__empty_layer__'
-            emptyLayer.style.position = 'absolute'
-            emptyLayer.style.inset = '0'
-            emptyLayer.style.pointerEvents = 'none'
-
             const hoverLayer = doc.createElement('div')
             hoverLayer.id = '__hover_layer__'
             hoverLayer.style.position = 'absolute'
@@ -139,7 +145,6 @@ export function useCanvasOverlay({ iframeRef }: Props) {
             selectionLayer.style.inset = '0'
             selectionLayer.style.pointerEvents = 'none'
 
-            root.appendChild(emptyLayer)
             root.appendChild(hoverLayer)
             root.appendChild(selectionLayer)
         }

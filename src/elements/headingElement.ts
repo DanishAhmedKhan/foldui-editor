@@ -13,7 +13,7 @@ export const HeadingElement: EditorElement = {
                     tag: 'h1',
                 },
                 style: {
-                    text: { fontSize: '24px' },
+                    text: { fontSize: '32px' },
                 },
             })
             .into(selectedNodeId)
