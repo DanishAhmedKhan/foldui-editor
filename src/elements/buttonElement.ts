@@ -5,7 +5,7 @@ export const ButtonElement: EditorElement = {
     name: 'Button',
     description: 'Click Now',
 
-    create: ({ selectedNodeId, builder }) => {
-        return builder.add('button').into(selectedNodeId)
+    create: ({ parentNodeId, builder, index }) => {
+        return builder.add('button').into(parentNodeId, index)
     },
 }

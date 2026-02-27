@@ -30,7 +30,7 @@ type EditorState = {
 
     getRenderSchema: () => FoldNode
 
-    addElement: (element: EditorElement) => void
+    addElement: (element: EditorElement, parentId?: string, index?: number) => void
 
     device: Device
     customWidths: {
@@ -107,18 +107,20 @@ export const useEditorStore = create<EditorState>((set, get) => {
             return builder.toRenderSchema()
         },
 
-        addElement: (element) => {
+        addElement: (element: EditorElement, parentNodeId?: string, index?: number) => {
             const { selectedNodeId, builder } = get()
-            if (!selectedNodeId) return
+
+            const targetParentId = parentNodeId ?? selectedNodeId
+            if (!targetParentId) return
 
             element.create({
-                selectedNodeId,
+                parentNodeId: targetParentId,
                 builder,
+                index,
             })
 
             set((state) => ({
                 version: state.version + 1,
-                // selectedNodeId: newId ?? state.selectedNodeId,
             }))
         },
 

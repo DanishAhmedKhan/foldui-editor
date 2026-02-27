@@ -5,7 +5,7 @@ export const TextElement: EditorElement = {
     name: 'Text',
     description: 'Simple text block',
 
-    create: ({ selectedNodeId, builder }) => {
+    create: ({ parentNodeId, builder, index }) => {
         return builder
             .add({
                 type: 'text',
@@ -16,6 +16,6 @@ export const TextElement: EditorElement = {
                     text: { fontSize: '16px' },
                 },
             })
-            .into(selectedNodeId)
+            .into(parentNodeId, index)
     },
 }

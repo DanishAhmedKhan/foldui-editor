@@ -5,10 +5,10 @@ export const SectionElement: EditorElement = {
     name: 'Section',
     description: 'Section',
 
-    create: ({ selectedNodeId, builder }) => {
+    create: ({ parentNodeId, builder, index }) => {
         const columnCount = 2
 
-        const sectionId = builder.add('section').into(selectedNodeId)
+        const sectionId = builder.add('section').into(parentNodeId, index)
         const rowId = builder
             .add({
                 type: 'container',
@@ -35,7 +35,7 @@ export const SectionElement: EditorElement = {
                     props: {
                         layout: {
                             type: 'flex',
-                            direction: 'vetical',
+                            direction: 'vertical',
                         },
                     },
                 })

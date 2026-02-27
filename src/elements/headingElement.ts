@@ -5,7 +5,7 @@ export const HeadingElement: EditorElement = {
     name: 'Heading',
     description: 'Heading',
 
-    create: ({ selectedNodeId, builder }) => {
+    create: ({ parentNodeId, builder, index }) => {
         return builder
             .add({
                 type: 'text',
@@ -16,6 +16,6 @@ export const HeadingElement: EditorElement = {
                     text: { fontSize: '32px' },
                 },
             })
-            .into(selectedNodeId)
+            .into(parentNodeId, index)
     },
 }

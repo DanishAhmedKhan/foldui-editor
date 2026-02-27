@@ -1,8 +1,9 @@
 import { GenericNodeSpec, SchemaBuilder } from 'foldui-builder'
 
 export interface EditorElementContext {
-    selectedNodeId: string
+    parentNodeId: string
     builder: SchemaBuilder<GenericNodeSpec>
+    index?: number
 }
 
 export interface EditorElement {
