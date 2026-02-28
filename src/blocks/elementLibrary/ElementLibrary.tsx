@@ -36,6 +36,7 @@ export const ElementLibrary: React.FC = () => {
                     draggable
                     onDragStart={(e) => {
                         e.dataTransfer.effectAllowed = 'copy'
+                        e.dataTransfer.setData('text/plain', element.type)
                         startDragging(element)
                     }}
                     onDragEnd={() => stopDragging()}

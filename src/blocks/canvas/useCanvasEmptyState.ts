@@ -20,6 +20,9 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
 
         let placeholder: HTMLElement | null = null
         let currentCol: HTMLElement | null = null
+        let hiddenSlot: HTMLElement | null = null
+        let lastParentId: string | null = null
+        let lastIndex: number | null = null
 
         function createPlaceholder() {
             if (placeholder) return placeholder
@@ -46,7 +49,7 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
             }
         }
 
-        function createEmptySlot(parentId: string) {
+        function createEmptySlot() {
             const slot = doc.createElement('div')
             slot.dataset.fuiEmptySlot = 'true'
             slot.dataset.editorIgnore = 'true'
@@ -78,27 +81,30 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
         }
 
         function getRealChildren(col: HTMLElement) {
-            return Array.from(col.children).filter(
-                (c) => !(c as HTMLElement).dataset.fuiPlaceholder && !(c as HTMLElement).dataset.fuiEmptySlot,
-            )
+            return Array.from(col.children).filter((c) => {
+                const el = c as HTMLElement
+                return !el.dataset.fuiPlaceholder && !el.dataset.fuiEmptySlot
+            })
         }
 
         function ensureEmptySlot(col: HTMLElement) {
-            const parentId = col.dataset.fuiId
-            if (!parentId) return
-
             const realChildren = getRealChildren(col)
             const existingSlot = col.querySelector('[data-fui-empty-slot="true"]')
 
             if (realChildren.length === 0 && !existingSlot) {
-                col.appendChild(createEmptySlot(parentId))
+                col.appendChild(createEmptySlot())
+            }
+
+            if (realChildren.length > 0 && existingSlot) {
+                ;(existingSlot as HTMLElement).style.display = 'none'
             }
         }
 
-        function restoreColumn(col: HTMLElement | null) {
-            if (!col) return
-            removePlaceholder()
-            ensureEmptySlot(col)
+        function restoreSlot() {
+            if (!hiddenSlot) return
+            hiddenSlot.style.visibility = ''
+            hiddenSlot.style.pointerEvents = ''
+            hiddenSlot = null
         }
 
         function renderEmptyStates() {
@@ -113,7 +119,11 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
 
         function handleDragOver(e: DragEvent) {
             if (!draggingElement) return
+
             e.preventDefault()
+            if (e.dataTransfer) {
+                e.dataTransfer.dropEffect = 'copy'
+            }
 
             const target = e.target as HTMLElement
 
@@ -122,44 +132,59 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
             ) as HTMLElement | null
 
             if (!col) {
-                if (currentCol) {
-                    restoreColumn(currentCol)
-                    currentCol = null
-                }
+                restoreSlot()
+                removePlaceholder()
+                currentCol = null
+                lastParentId = null
+                lastIndex = null
                 return
             }
 
-            if (currentCol && currentCol !== col) {
-                restoreColumn(currentCol)
-                currentCol = null
-            }
-
-            if (!currentCol) {
-                currentCol = col
-            }
+            const parentId = col.dataset.fuiId
+            if (!parentId) return
 
             const realChildren = getRealChildren(col)
-            const ph = createPlaceholder()
 
-            const slot = col.querySelector('[data-fui-empty-slot="true"]')
-            if (slot) slot.remove()
+            let newIndex = realChildren.length
 
-            if (realChildren.length === 0) {
-                col.appendChild(ph)
-                return
-            }
-
-            for (const child of realChildren) {
-                const rect = child.getBoundingClientRect()
+            for (let i = 0; i < realChildren.length; i++) {
+                const rect = realChildren[i].getBoundingClientRect()
                 const middle = rect.top + rect.height / 2
-
                 if (e.clientY < middle) {
-                    col.insertBefore(ph, child)
-                    return
+                    newIndex = i
+                    break
                 }
             }
 
-            col.appendChild(ph)
+            if (parentId === lastParentId && newIndex === lastIndex) return
+
+            if (currentCol && currentCol !== col) {
+                restoreSlot()
+            }
+
+            currentCol = col
+            lastParentId = parentId
+            lastIndex = newIndex
+
+            ensureEmptySlot(col)
+
+            const ph = createPlaceholder()
+
+            const slot = col.querySelector('[data-fui-empty-slot="true"]') as HTMLElement | null
+
+            if (slot && realChildren.length === 0) {
+                hiddenSlot = slot
+                slot.style.visibility = 'hidden'
+                slot.style.pointerEvents = 'none'
+                col.insertBefore(ph, slot)
+                return
+            }
+
+            if (newIndex >= realChildren.length) {
+                col.appendChild(ph)
+            } else {
+                col.insertBefore(ph, realChildren[newIndex])
+            }
         }
 
         function handleDrop(e: DragEvent) {
@@ -179,29 +204,29 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
             addElement(draggingElement.elementDefinition as any, parentId, index)
 
             removePlaceholder()
+            hiddenSlot = null
             stopDragging()
+
             currentCol = null
+            lastParentId = null
+            lastIndex = null
 
             setTimeout(renderEmptyStates, 0)
         }
 
-        function handleDragLeave(e: DragEvent) {
-            const related = e.relatedTarget as Node | null
-            if (!related || !doc.contains(related)) {
-                restoreColumn(currentCol)
-                currentCol = null
-            }
-        }
-
         function handleDragEnd() {
-            restoreColumn(currentCol)
+            restoreSlot()
+            removePlaceholder()
+
             currentCol = null
+            lastParentId = null
+            lastIndex = null
+
             stopDragging()
         }
 
         doc.addEventListener('dragover', handleDragOver)
         doc.addEventListener('drop', handleDrop)
-        doc.addEventListener('dragleave', handleDragLeave)
         doc.addEventListener('dragend', handleDragEnd)
 
         renderEmptyStates()
@@ -209,7 +234,6 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
         return () => {
             doc.removeEventListener('dragover', handleDragOver)
             doc.removeEventListener('drop', handleDrop)
-            doc.removeEventListener('dragleave', handleDragLeave)
             doc.removeEventListener('dragend', handleDragEnd)
         }
     }, [iframeRef, version, draggingElement, addElement, stopDragging])
