@@ -5,6 +5,7 @@ import { ElementLibrary } from './blocks/elementLibrary/ElementLibrary'
 import { registerDefaultElements } from './elements/initDefaultElements'
 import { Responsive } from './blocks/responsive/Responsive'
 import { PropertyEditor } from './blocks/propertyEditor/PropertyEditor'
+import { editorEvents } from './events/editorEvents'
 
 export interface FolduiEditorProps {
     schema?: unknown
@@ -14,7 +15,19 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
     const builder = useEditorStore((s) => s.builder)
     const selectNode = useEditorStore((s) => s.setSelectedNodeId)
 
-    const [mode, setMode] = useState<'library' | 'properties'>('properties')
+    const [mode, setMode] = useState<'library' | 'properties'>('library')
+
+    useEffect(() => {
+        const unsubscribe = editorEvents.on('element:selected', ({ nodeId }) => {
+            if (nodeId) {
+                setMode('properties')
+            } else {
+                setMode('library')
+            }
+        })
+
+        return unsubscribe
+    }, [])
 
     useEffect(() => {
         const rootId = builder.getRootId()
@@ -54,6 +67,8 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                         flex: '0 0 300px',
                         borderRight: '1px solid black',
                         overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
                     }}
                 >
                     <div style={{ padding: 10 }}>

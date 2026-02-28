@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { NodeInput, SchemaBuilder } from 'foldui-builder'
 import { FoldNode, NodeSpec } from 'foldui'
 import { EditorElement } from '../elements/types'
+import { editorEvents } from '../events/editorEvents'
 
 type NodeSpecType = typeof NodeSpec
 
@@ -43,7 +44,6 @@ type EditorState = {
     patchField: (id: string, field: string, patch: Record<string, unknown>) => void
     patchPath: (id: string, path: string | (string | number)[], value: unknown) => void
 
-    /* ✅ NEW */
     updateNode: (id: string, path: string, value: unknown) => void
 
     getRenderSchema: () => FoldNode
@@ -78,7 +78,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
         version: 0,
         selectedNodeId: null,
 
-        setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+        setSelectedNodeId: (id) => {
+            set({ selectedNodeId: id })
+
+            editorEvents.emit('element:selected', { nodeId: id })
+        },
 
         addNode: (options, parentId) => {
             const id = builder.add(options).into(parentId)
@@ -121,10 +125,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
                 version: state.version + 1,
             }))
         },
-
-        /* ---------------------------------- */
-        /* ✅ NEW updateNode (for property editor) */
-        /* ---------------------------------- */
 
         updateNode: (id, path, value) => {
             const node = builder.getNode(id)
