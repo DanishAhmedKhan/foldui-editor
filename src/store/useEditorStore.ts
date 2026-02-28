@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { NodeInput, SchemaBuilder } from 'foldui-builder'
 import { FoldNode, NodeSpec } from 'foldui'
 import { EditorElement } from '../elements/types'
-import { editorEvents } from '../events/editorEvents'
+import { editorEventBus } from '../events/editorEventBus'
 
 type NodeSpecType = typeof NodeSpec
 
@@ -79,9 +79,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
         selectedNodeId: null,
 
         setSelectedNodeId: (id) => {
+            if (!id) return
+
             set({ selectedNodeId: id })
 
-            editorEvents.emit('element:selected', { nodeId: id })
+            editorEventBus.emit('ElementSelected', { elementId: id })
         },
 
         addNode: (options, parentId) => {

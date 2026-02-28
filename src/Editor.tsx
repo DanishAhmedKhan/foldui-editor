@@ -5,7 +5,7 @@ import { ElementLibrary } from './blocks/elementLibrary/ElementLibrary'
 import { registerDefaultElements } from './elements/initDefaultElements'
 import { Responsive } from './blocks/responsive/Responsive'
 import { PropertyEditor } from './blocks/propertyEditor/PropertyEditor'
-import { editorEvents } from './events/editorEvents'
+import { useEditorEvent } from './events/useEditorEvent'
 
 export interface FolduiEditorProps {
     schema?: unknown
@@ -17,17 +17,13 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
 
     const [mode, setMode] = useState<'library' | 'properties'>('library')
 
-    useEffect(() => {
-        const unsubscribe = editorEvents.on('element:selected', ({ nodeId }) => {
-            if (nodeId) {
-                setMode('properties')
-            } else {
-                setMode('library')
-            }
-        })
-
-        return unsubscribe
-    }, [])
+    useEditorEvent('ElementSelected', ({ elementId }) => {
+        if (elementId) {
+            setMode('properties')
+        } else {
+            setMode('library')
+        }
+    })
 
     useEffect(() => {
         const rootId = builder.getRootId()
@@ -73,7 +69,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                 >
                     <div style={{ padding: 10 }}>
                         <button onClick={() => setMode('library')}>＋</button>
-                        <button onClick={() => setMode('properties')}>⚙</button>
                     </div>
 
                     <div style={{ flex: 1, overflowY: 'auto' }}>

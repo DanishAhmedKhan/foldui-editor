@@ -1,31 +1,30 @@
-type EditorEventMap = {
-    'element:selected': { nodeId: string | null }
-    'element:added': { nodeId: string }
-    'element:removed': { nodeId: string }
-}
-
-type Listener<T> = (payload: T) => void
-
-class EditorEventBus {
-    private listeners: {
-        [K in keyof EditorEventMap]?: Listener<EditorEventMap[K]>[]
-    } = {}
-
-    on<K extends keyof EditorEventMap>(event: K, callback: Listener<EditorEventMap[K]>) {
-        if (!this.listeners[event]) {
-            this.listeners[event] = []
-        }
-
-        this.listeners[event]!.push(callback)
-
-        return () => {
-            this.listeners[event] = this.listeners[event]!.filter((cb) => cb !== callback)
-        }
+export interface EditorEventMap {
+    ElementSelected: {
+        elementId: string
+        elementType?: string
     }
 
-    emit<K extends keyof EditorEventMap>(event: K, payload: EditorEventMap[K]) {
-        this.listeners[event]?.forEach((cb) => cb(payload))
+    ElementAdded: {
+        elementId: string
+        parentId: string
+    }
+
+    ElementRemoved: {
+        elementId: string
+        parentId: string
+    }
+
+    ElementUpdated: {
+        elementId: string
+        changedProps: Record<string, any>
+    }
+
+    BreakpointChanged: {
+        breakpoint: 'desktop' | 'tablet' | 'mobile'
+    }
+
+    HistoryChanged: {
+        canUndo: boolean
+        canRedo: boolean
     }
 }
-
-export const editorEvents = new EditorEventBus()
