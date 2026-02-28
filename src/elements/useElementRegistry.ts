@@ -10,7 +10,12 @@ export const useElementRegistry = create<ElementRegistryState>((set) => ({
     elements: [],
 
     registerElement: (element) =>
-        set((state) => ({
-            elements: [...state.elements, element],
-        })),
+        set((state) => {
+            const exists = state.elements.find((el) => el.type === element.type)
+            if (exists) return state
+
+            return {
+                elements: [...state.elements, element],
+            }
+        }),
 }))

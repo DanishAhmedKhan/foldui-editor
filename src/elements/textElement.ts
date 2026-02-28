@@ -18,4 +18,50 @@ export const TextElement: EditorElement = {
             })
             .into(parentNodeId, index)
     },
+
+    properties: [
+        {
+            id: 'content',
+            label: 'Content',
+            fields: [
+                {
+                    id: 'text',
+                    label: 'Text',
+                    type: 'text',
+                    path: 'props.content',
+                },
+                {
+                    id: 'tag',
+                    label: 'Tag',
+                    type: 'select',
+                    path: 'props.tag',
+                    options: [
+                        { label: 'Paragraph', value: 'p' },
+                        { label: 'Heading 1', value: 'h1' },
+                        { label: 'Heading 2', value: 'h2' },
+                    ],
+                },
+            ],
+        },
+        {
+            id: 'typography',
+            label: 'Typography',
+            fields: [
+                {
+                    id: 'fontSize',
+                    label: 'Font Size',
+                    type: 'slider',
+                    min: 10,
+                    max: 72,
+                    path: 'style.text.fontSize',
+                },
+                {
+                    id: 'color',
+                    label: 'Color',
+                    type: 'color',
+                    path: 'style.text.color',
+                },
+            ],
+        },
+    ],
 }

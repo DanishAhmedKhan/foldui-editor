@@ -1,4 +1,5 @@
 import { GenericNodeSpec, SchemaBuilder } from 'foldui-builder'
+import { PropertyGroup } from '../blocks/propertyEditor/PropertyTypes'
 
 export interface EditorElementContext {
     parentNodeId: string
@@ -12,4 +13,5 @@ export interface EditorElement {
     description?: string
     icon?: React.ReactNode
     create: (context: EditorElementContext) => string
+    properties?: PropertyGroup[]
 }

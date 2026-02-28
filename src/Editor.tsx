@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useEditorStore } from './store/useEditorStore'
 import { Canvas } from './blocks/canvas/Canvas'
 import { ElementLibrary } from './blocks/elementLibrary/ElementLibrary'
 import { registerDefaultElements } from './elements/initDefaultElements'
 import { Responsive } from './blocks/responsive/Responsive'
+import { PropertyEditor } from './blocks/propertyEditor/PropertyEditor'
 
 export interface FolduiEditorProps {
     schema?: unknown
@@ -12,6 +13,8 @@ export interface FolduiEditorProps {
 export const Editor: React.FC<FolduiEditorProps> = () => {
     const builder = useEditorStore((s) => s.builder)
     const selectNode = useEditorStore((s) => s.setSelectedNodeId)
+
+    const [mode, setMode] = useState<'library' | 'properties'>('properties')
 
     useEffect(() => {
         const rootId = builder.getRootId()
@@ -53,7 +56,14 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                         overflowY: 'auto',
                     }}
                 >
-                    <ElementLibrary />
+                    <div style={{ padding: 10 }}>
+                        <button onClick={() => setMode('library')}>＋</button>
+                        <button onClick={() => setMode('properties')}>⚙</button>
+                    </div>
+
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {mode === 'library' ? <ElementLibrary /> : <PropertyEditor />}
+                    </div>
                 </div>
 
                 <div

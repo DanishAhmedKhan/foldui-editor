@@ -6,12 +6,27 @@ import { EditorElement } from '../elements/types'
 type NodeSpecType = typeof NodeSpec
 
 type Device = 'responsive' | 'desktop' | 'tablet' | 'mobile'
-
 type EditorMode = 'edit' | 'preview'
 
 type DragState = {
     elementType: string
     elementDefinition: unknown
+}
+
+function getValue(obj: any, path: string) {
+    return path.split('.').reduce((o, key) => o?.[key], obj)
+}
+
+function setValue(obj: any, path: string, value: any) {
+    const keys = path.split('.')
+    const last = keys.pop()!
+
+    const target = keys.reduce((o, key) => {
+        if (!o[key]) o[key] = {}
+        return o[key]
+    }, obj)
+
+    target[last] = value
 }
 
 type EditorState = {
@@ -28,6 +43,9 @@ type EditorState = {
     patchField: (id: string, field: string, patch: Record<string, unknown>) => void
     patchPath: (id: string, path: string | (string | number)[], value: unknown) => void
 
+    /* ✅ NEW */
+    updateNode: (id: string, path: string, value: unknown) => void
+
     getRenderSchema: () => FoldNode
 
     addElement: (element: EditorElement, parentId?: string, index?: number) => void
@@ -38,6 +56,7 @@ type EditorState = {
         tablet: number
         mobile: number
     }
+
     setDevice: (device: Device) => void
     setCustomWidth: (device: Exclude<Device, 'responsive'>, width: number) => void
 
@@ -47,7 +66,7 @@ type EditorState = {
     mode: EditorMode
 
     draggingElement: DragState | null
-    startDragging: (el: unknown) => void
+    startDragging: (el: any) => void
     stopDragging: () => void
 }
 
@@ -97,6 +116,21 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
         patchPath: (id, path, value) => {
             builder.patchPath(id, path, value)
+
+            set((state) => ({
+                version: state.version + 1,
+            }))
+        },
+
+        /* ---------------------------------- */
+        /* ✅ NEW updateNode (for property editor) */
+        /* ---------------------------------- */
+
+        updateNode: (id, path, value) => {
+            const node = builder.getNode(id)
+            if (!node) return
+
+            setValue(node, path, value)
 
             set((state) => ({
                 version: state.version + 1,
