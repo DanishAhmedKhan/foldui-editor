@@ -1,19 +1,17 @@
-import React, { useEffect, useState } from 'react'
-import { useEditorStore } from './store/useEditorStore'
+import React, { useState } from 'react'
 import { Canvas } from './blocks/canvas/Canvas'
 import { ElementLibrary } from './blocks/elementLibrary/ElementLibrary'
-import { registerDefaultElements } from './elements/initDefaultElements'
 import { Responsive } from './blocks/responsive/Responsive'
 import { PropertyEditor } from './blocks/propertyEditor/PropertyEditor'
 import { useEditorEvent } from './events/useEditorEvent'
+import { useEditorInitialization } from './core/useEditorInitizlization'
 
 export interface FolduiEditorProps {
     schema?: unknown
 }
 
 export const Editor: React.FC<FolduiEditorProps> = () => {
-    const builder = useEditorStore((s) => s.builder)
-    const selectNode = useEditorStore((s) => s.setSelectedNodeId)
+    useEditorInitialization()
 
     const [mode, setMode] = useState<'library' | 'properties'>('library')
 
@@ -25,15 +23,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
         }
     })
 
-    useEffect(() => {
-        const rootId = builder.getRootId()
-        selectNode(rootId)
-    }, [builder, selectNode])
-
-    useEffect(() => {
-        registerDefaultElements()
-    }, [])
-
     return (
         <div
             style={{
@@ -43,7 +32,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                 flexDirection: 'column',
                 border: '1px solid #ddd',
                 background: '#fafafa',
-                boxSizing: 'border-box',
                 overflow: 'hidden',
             }}
         >
