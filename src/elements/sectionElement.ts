@@ -8,40 +8,50 @@ export const SectionElement: EditorElement = {
     create: ({ parentNodeId, builder, index }) => {
         const columnCount = 2
 
-        const sectionId = builder.add('section').into(parentNodeId, index)
+        const sectionId = builder
+            .add({
+                type: 'section',
+                responsive: {
+                    section: {
+                        base: {
+                            padding: '100px 0px',
+                        },
+                    },
+                },
+            })
+            .into(parentNodeId, index)
+
         const rowId = builder
             .add({
                 type: 'container',
-                props: {
-                    layout: {
-                        type: 'grid',
-                        columns: columnCount,
-                        gap: 50,
-                    },
-                },
-                style: {
+                responsive: {
                     container: {
-                        maxWidth: '800px',
-                        margin: '0 auto',
+                        base: {
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                            gap: 50,
+                            maxWidth: 800,
+                            margin: '0 auto',
+                        },
                     },
                 },
             })
             .into(sectionId)
 
         for (let i = 0; i < columnCount; i++) {
-            const containerId = builder
+            builder
                 .add({
                     type: 'container',
-                    props: {
-                        layout: {
-                            type: 'flex',
-                            direction: 'vertical',
+                    responsive: {
+                        container: {
+                            base: {
+                                display: 'flex',
+                                flexDirection: 'column',
+                            },
                         },
                     },
                 })
                 .into(rowId)
-
-            // builder.add('text').into(containerId)
         }
 
         return sectionId

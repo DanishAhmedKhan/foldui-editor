@@ -9,11 +9,13 @@ export const HeadingElement: EditorElement = {
         return builder
             .add({
                 type: 'text',
-                props: {
-                    tag: 'h1',
-                },
-                style: {
-                    text: { fontSize: '32px' },
+                props: { tag: 'h1' },
+                responsive: {
+                    text: {
+                        base: {
+                            fontSize: 32,
+                        },
+                    },
                 },
             })
             .into(parentNodeId, index)

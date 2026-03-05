@@ -13,7 +13,10 @@ export const TextElement: EditorElement = {
                     tag: 'p',
                 },
                 style: {
-                    text: { fontSize: '16px' },
+                    text: {
+                        fontSize: '16px',
+                        color: '#f00',
+                    },
                 },
             })
             .into(parentNodeId, index)

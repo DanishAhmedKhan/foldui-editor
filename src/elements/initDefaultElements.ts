@@ -7,8 +7,8 @@ import { useElementRegistry } from './useElementRegistry'
 export function registerDefaultElements() {
     const { registerElement } = useElementRegistry.getState()
 
+    registerElement(SectionElement)
     registerElement(HeadingElement)
     registerElement(TextElement)
     registerElement(ButtonElement)
-    registerElement(SectionElement)
 }
