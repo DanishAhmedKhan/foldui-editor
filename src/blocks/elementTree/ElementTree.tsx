@@ -27,7 +27,7 @@ export const ElementTree: React.FC = () => {
                         borderRadius: 4,
                     }}
                 >
-                    {node.type}
+                    {node.editorType ?? node.type}
                 </div>
 
                 {children.map((childId) => renderNode(childId, depth + 1))}

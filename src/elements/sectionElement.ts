@@ -11,6 +11,7 @@ export const SectionElement: EditorElement = {
         const sectionId = builder
             .add({
                 type: 'section',
+                editorType: 'section',
                 responsive: {
                     section: {
                         base: {
@@ -24,6 +25,7 @@ export const SectionElement: EditorElement = {
         const rowId = builder
             .add({
                 type: 'container',
+                editorType: 'row',
                 responsive: {
                     container: {
                         base: {
@@ -42,6 +44,7 @@ export const SectionElement: EditorElement = {
             builder
                 .add({
                     type: 'container',
+                    editorType: 'column',
                     responsive: {
                         container: {
                             base: {

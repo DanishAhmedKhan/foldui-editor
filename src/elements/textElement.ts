@@ -9,13 +9,16 @@ export const TextElement: EditorElement = {
         return builder
             .add({
                 type: 'text',
+                editorType: 'text',
                 props: {
                     tag: 'p',
                 },
-                style: {
+                responsive: {
                     text: {
-                        fontSize: '16px',
-                        color: '#f00',
+                        base: {
+                            fontSize: '40px',
+                            color: '#f00',
+                        },
                     },
                 },
             })
@@ -56,13 +59,15 @@ export const TextElement: EditorElement = {
                     type: 'slider',
                     min: 10,
                     max: 72,
-                    path: 'style.text.fontSize',
+                    styleKey: 'text',
+                    responsive: true,
                 },
                 {
                     id: 'color',
                     label: 'Color',
                     type: 'color',
-                    path: 'style.text.color',
+                    styleKey: 'text',
+                    responsive: true,
                 },
             ],
         },

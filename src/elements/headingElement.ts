@@ -9,6 +9,7 @@ export const HeadingElement: EditorElement = {
         return builder
             .add({
                 type: 'text',
+                editorType: 'heading',
                 props: { tag: 'h1' },
                 responsive: {
                     text: {

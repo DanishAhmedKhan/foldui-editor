@@ -66,7 +66,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                 position: 'relative',
             }}
         >
-            {/* Top Bar */}
             <div
                 style={{
                     height: 70,
@@ -83,7 +82,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                 <button onClick={() => setShowTree(true)}>Open Tree</button>
             </div>
 
-            {/* Main Layout */}
             <div style={{ display: 'flex', flex: 1 }}>
                 <div
                     style={{
@@ -95,7 +93,7 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                     }}
                 >
                     <div style={{ padding: 10 }}>
-                        <button onClick={() => setMode('library')}>＋</button>
+                        <button onClick={() => setMode('library')}>Add ＋</button>
                     </div>
 
                     <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -115,7 +113,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                 </div>
             </div>
 
-            {/* Floating Draggable Tree */}
             {showTree && (
                 <div
                     style={{
@@ -133,7 +130,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                         zIndex: 9999,
                     }}
                 >
-                    {/* Header (Draggable Area) */}
                     <div
                         onMouseDown={startDrag}
                         style={{
@@ -164,7 +160,6 @@ export const Editor: React.FC<FolduiEditorProps> = () => {
                         </button>
                     </div>
 
-                    {/* Tree Content */}
                     <div style={{ flex: 1, overflowY: 'auto' }}>
                         <ElementTree />
                     </div>
