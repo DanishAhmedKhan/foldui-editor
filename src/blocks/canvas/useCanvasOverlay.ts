@@ -19,7 +19,6 @@ const OVERLAY_COLORS = {
 }
 
 export function useCanvasOverlay({ iframeRef }: Props) {
-    const version = useEditorStore((s) => s.version)
     const builder = useEditorStore((s) => s.builder)
 
     const selectedNodeId = useEditorStore((s) => s.selectedNodeId)
@@ -104,7 +103,7 @@ export function useCanvasOverlay({ iframeRef }: Props) {
             doc.removeEventListener('click', handleClick)
             doc.removeEventListener('mouseleave', handleLeave)
         }
-    }, [iframeRef, version, selectedNodeId, setSelectedNodeId])
+    }, [iframeRef, selectedNodeId, setSelectedNodeId])
 
     useEffect(() => {
         const iframe = iframeRef.current!
@@ -244,5 +243,5 @@ export function useCanvasOverlay({ iframeRef }: Props) {
             win.removeEventListener('scroll', render)
             win.removeEventListener('resize', render)
         }
-    }, [iframeRef, selectedNodeId, hoveredNodeId, version, builder])
+    }, [iframeRef, selectedNodeId, hoveredNodeId, builder])
 }

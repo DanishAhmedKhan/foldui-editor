@@ -14,10 +14,6 @@ type DragState = {
     elementDefinition: unknown
 }
 
-function getValue(obj: any, path: string) {
-    return path.split('.').reduce((o, key) => o?.[key], obj)
-}
-
 function setValue(obj: any, path: string, value: any) {
     const keys = path.split('.')
     const last = keys.pop()!
@@ -32,7 +28,8 @@ function setValue(obj: any, path: string, value: any) {
 
 type EditorState = {
     builder: SchemaBuilder<NodeSpecType>
-    version: number
+
+    nodes: Record<string, any>
 
     selectedNodeId: string | null
     setSelectedNodeId: (id: string | null) => void
@@ -46,6 +43,7 @@ type EditorState = {
 
     updateNode: (id: string, path: string, value: unknown) => void
 
+    getNode: (id: string) => any
     getRenderSchema: () => FoldNode
 
     addElement: (element: EditorElement, parentId?: string, index?: number) => void
@@ -75,22 +73,31 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     return {
         builder,
-        version: 0,
+
+        nodes: {},
+
         selectedNodeId: null,
 
         setSelectedNodeId: (id) => {
-            if (!id) return
-
             set({ selectedNodeId: id })
+            if (id) {
+                editorEventBus.emit('ElementSelected', { elementId: id })
+            }
+        },
 
-            editorEventBus.emit('ElementSelected', { elementId: id })
+        getNode: (id) => {
+            return get().nodes[id] ?? builder.getNode(id)
         },
 
         addNode: (options, parentId) => {
             const id = builder.add(options).into(parentId)
+            const node = builder.getNode(id)
 
             set((state) => ({
-                version: state.version + 1,
+                nodes: {
+                    ...state.nodes,
+                    [id]: { ...node },
+                },
             }))
 
             return id
@@ -99,32 +106,50 @@ export const useEditorStore = create<EditorState>((set, get) => {
         removeNode: (id) => {
             builder.remove(id)
 
-            set((state) => ({
-                version: state.version + 1,
-            }))
+            set((state) => {
+                const newNodes = { ...state.nodes }
+                delete newNodes[id]
+
+                return { nodes: newNodes }
+            })
         },
 
         updateField: (id, field, value) => {
             builder.updateField(id, field, value)
 
+            const node = builder.getNode(id)
+
             set((state) => ({
-                version: state.version + 1,
+                nodes: {
+                    ...state.nodes,
+                    [id]: { ...node },
+                },
             }))
         },
 
         patchField: (id, field, patch) => {
             builder.patchField(id, field, patch)
 
+            const node = builder.getNode(id)
+
             set((state) => ({
-                version: state.version + 1,
+                nodes: {
+                    ...state.nodes,
+                    [id]: { ...node },
+                },
             }))
         },
 
         patchPath: (id, path, value) => {
             builder.patchPath(id, path, value)
 
+            const node = builder.getNode(id)
+
             set((state) => ({
-                version: state.version + 1,
+                nodes: {
+                    ...state.nodes,
+                    [id]: { ...node },
+                },
             }))
         },
 
@@ -135,7 +160,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
             setValue(node, path, value)
 
             set((state) => ({
-                version: state.version + 1,
+                nodes: {
+                    ...state.nodes,
+                    [id]: { ...node },
+                },
             }))
         },
 
@@ -149,14 +177,21 @@ export const useEditorStore = create<EditorState>((set, get) => {
             const targetParentId = parentNodeId ?? selectedNodeId
             if (!targetParentId) return
 
-            element.create({
+            const newNodeId = element.create({
                 parentNodeId: targetParentId,
                 builder,
                 index,
             })
 
+            const parentNode = builder.getNode(targetParentId)
+            const newNode = builder.getNode(newNodeId)
+
             set((state) => ({
-                version: state.version + 1,
+                nodes: {
+                    ...state.nodes,
+                    [targetParentId]: { ...parentNode },
+                    [newNodeId]: { ...newNode },
+                },
             }))
         },
 
@@ -179,7 +214,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
             })),
 
         isResizing: false,
-        setIsResizing: (value: boolean) => set({ isResizing: value }),
+
+        setIsResizing: (value) => set({ isResizing: value }),
 
         mode: 'edit',
 

@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useEditorStore } from '../store/useEditorStore'
 import { registerDefaultElements } from '../elements/initDefaultElements'
-import { editorEventBus } from '../events/editorEventBus'
 import { Fold } from 'foldui'
 
 export function useEditorInitialization(schema?: unknown) {
@@ -50,12 +49,9 @@ export function useEditorInitialization(schema?: unknown) {
 
         // if (schema) {
         //     builder.loadSchema(schema)
-        //     // editorEventBus.emit('SchemaLoaded', { schema })
         // }
 
         const rootId = builder.getRootId()
         selectNode(rootId)
-
-        // editorEventBus.emit('EditorInitialized', {})
-    }, [])
+    }, [builder, selectNode, schema])
 }

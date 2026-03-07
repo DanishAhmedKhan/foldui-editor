@@ -1,4 +1,3 @@
-import { resolveNode } from '../../core/resolveNode'
 import { getElementDefinition } from '../../elements/getElementDefinition'
 import { useEditorStore } from '../../store/useEditorStore'
 import { useActiveBreakpoint } from '../responsive/useActiveBreakpoint'
@@ -8,7 +7,6 @@ import { buildPropertyPath } from './propertyResolver'
 export const PropertyEditor = () => {
     const selectedNodeId = useEditorStore((s) => s.selectedNodeId)
     const builder = useEditorStore((s) => s.builder)
-    const patchPath = useEditorStore((s) => s.patchPath)
 
     const breakpoint = useActiveBreakpoint()
 
@@ -20,15 +18,6 @@ export const PropertyEditor = () => {
     const element = getElementDefinition(node.editorType ?? node.type)
     if (!element?.properties) return null
 
-    // const resolvedNode = resolveNode(node, element)
-
-    function getByPath(obj: any, path: string) {
-        return path.split('.').reduce((acc, key) => {
-            if (!acc) return undefined
-            return acc[key]
-        }, obj)
-    }
-
     return (
         <div style={{ padding: 16 }}>
             {element.properties.map((group) => (
@@ -37,22 +26,8 @@ export const PropertyEditor = () => {
 
                     {group.fields.map((field) => {
                         const path = buildPropertyPath(field, breakpoint)
-                        console.log(path)
 
-                        const value = getByPath(node, path)
-                        console.log('value', value)
-
-                        return (
-                            <FieldRenderer
-                                key={field.id}
-                                field={field}
-                                value={value ?? field.min ?? 0}
-                                onChange={(val) => {
-                                    console.log(path)
-                                    patchPath(selectedNodeId, path, val)
-                                }}
-                            />
-                        )
+                        return <FieldRenderer key={field.id} field={field} nodeId={selectedNodeId} path={path} />
                     })}
                 </div>
             ))}

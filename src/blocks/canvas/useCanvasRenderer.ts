@@ -4,8 +4,8 @@ import { useEditorStore } from '../../store/useEditorStore'
 import { useIframeBridge } from './useIframeBridge'
 
 export function useCanvasRenderer(iframeRef: React.RefObject<HTMLIFrameElement | null>) {
-    const version = useEditorStore((s) => s.version)
     const builder = useEditorStore((s) => s.builder)
+    const nodes = useEditorStore((s) => s.nodes)
 
     const { mountIntoIframe } = useIframeBridge(iframeRef)
 
@@ -21,5 +21,5 @@ export function useCanvasRenderer(iframeRef: React.RefObject<HTMLIFrameElement |
 
         const htmlElement = Fold.render(schema, doc)
         mountIntoIframe(htmlElement)
-    }, [version, builder, mountIntoIframe, iframeRef])
+    }, [nodes, builder, mountIntoIframe, iframeRef])
 }

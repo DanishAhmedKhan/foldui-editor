@@ -6,7 +6,7 @@ interface Props {
 }
 
 export function useCanvasEmptyState({ iframeRef }: Props) {
-    const version = useEditorStore((s) => s.version)
+    const nodes = useEditorStore((s) => s.nodes)
     const addElement = useEditorStore((s) => s.addElement)
     const draggingElement = useEditorStore((s) => s.draggingElement)
     const stopDragging = useEditorStore((s) => s.stopDragging)
@@ -236,5 +236,5 @@ export function useCanvasEmptyState({ iframeRef }: Props) {
             doc.removeEventListener('drop', handleDrop)
             doc.removeEventListener('dragend', handleDragEnd)
         }
-    }, [iframeRef, version, draggingElement, addElement, stopDragging])
+    }, [iframeRef, draggingElement, addElement, stopDragging, nodes])
 }
